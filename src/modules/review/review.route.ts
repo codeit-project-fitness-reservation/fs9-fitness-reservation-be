@@ -28,6 +28,13 @@ router.get(
   reviewController.getReviewsByCenterHandler
 );
 
+// 클래스별 리뷰 조회
+router.get(
+  "/class/:classId",
+  validate(queryReviewSchema),
+  reviewController.getReviewsByClassHandler
+);
+
 // 내 리뷰 조회
 router.get(
   "/my/:reservationId",
