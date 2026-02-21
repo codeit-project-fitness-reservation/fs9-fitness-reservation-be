@@ -77,6 +77,32 @@ export async function getReviewsByCenterHandler(
   }
 }
 
+// [공통] 클래스별 리뷰 목록 조회 핸들러
+export async function getReviewsByClassHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { classId } = req.params;
+
+    if (!classId) {
+      throw new AppError(400, "클래스 ID는 필수입니다", "INVALID_INPUT");
+    }
+
+    const query = queryReviewSchema.parse(req.query);
+    const page = query.page;
+    const limit = query.limit;
+
+    const result = await reviewService.getReviewsByClass(classId as string, page, limit);
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 // [고객] 내 예약 리뷰 조회 핸들러
 export async function getMyReviewByReservationIdHandler(
   req: Request,

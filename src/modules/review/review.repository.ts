@@ -64,6 +64,49 @@ export async function countReviewsByCenterId(centerId: string) {
   });
 }
 
+// 클래스별 리뷰 조회
+export async function findReviewsByClassId(
+  classId: string,
+  skip: number,
+  take: number
+) {
+  return prisma.review.findMany({
+    where: {
+      classId,
+      class: { deletedAt: null },
+    },
+    skip,
+    take,
+    orderBy: { createdAt: "desc" },
+    include: {
+      user: {
+        select: {
+          id: true,
+          nickname: true,
+          profileImgUrl: true,
+        },
+      },
+      reservation: {
+        select: {
+          id: true,
+          slotStartAt: true,
+        },
+      },
+    },
+  });
+}
+
+// 클래스별 리뷰 개수 조회
+export async function countReviewsByClassId(classId: string) {
+  return prisma.review.count({
+    where: {
+      classId,
+      class: { deletedAt: null },
+    },
+  });
+}
+
+
 // 예약 ID로 리뷰 조회
 export async function findReviewByReservationId(reservationId: string) {
   return prisma.review.findUnique({

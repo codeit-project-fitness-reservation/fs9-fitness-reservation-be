@@ -80,6 +80,28 @@ export async function getReviewsByCenter(
   };
 }
 
+// [공통] 클래스별 리뷰 목록 조회
+export async function getReviewsByClass(
+  classId: string,
+  page: number = 1,
+  limit: number = 20
+) {
+  const skip = (page - 1) * limit;
+  const reviews = await reviewRepository.findReviewsByClassId(classId, skip, limit);
+  const totalCount = await reviewRepository.countReviewsByClassId(classId);
+
+  return {
+    reviews,
+    pagination: {
+      totalCount,
+      totalPage: Math.ceil(totalCount / limit),
+      currentPage: page,
+      limit,
+    },
+  };
+}
+
+
 // [고객] 내 예약 리뷰 조회
 export async function getMyReviewByReservationId(
   userId: string,
