@@ -35,13 +35,16 @@ export type QuerySellerTransactionsInput = z.infer<typeof querySellerTransaction
 
 // [관리자] 포인트 지급/회수
 export const adjustPointSchema = z.object({
-  userId: z.string().min(1, "유저 ID가 필요합니다"),
-  amount: z.number().int().refine((val) => val !== 0, {
-    message: "금액은 0이 아니어야 합니다",
+  body: z.object({
+    userId: z.string().min(1, "유저 ID가 필요합니다"),
+    amount: z.number().int().refine((val) => val !== 0, {
+      message: "금액은 0이 아니어야 합니다",
+    }),
+    memo: z.string().min(1, "사유를 입력해주세요"),
   }),
-  memo: z.string().min(1, "사유를 입력해주세요"),
 });
-export type AdjustPointInput = z.infer<typeof adjustPointSchema>;
+export type AdjustPointInput = z.infer<typeof adjustPointSchema>["body"];
+
 
 // [관리자] 전체 포인트 내역 조회
 export const queryAdminPointHistorySchema = z.object({

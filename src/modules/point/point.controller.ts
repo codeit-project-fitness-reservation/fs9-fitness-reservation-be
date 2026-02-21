@@ -6,8 +6,8 @@ import {
   queryMyPointHistorySchema,
   querySellerSettlementSchema,
   querySellerTransactionsSchema,
-  adjustPointSchema,
   queryAdminPointHistorySchema,
+  type AdjustPointInput,
 } from "./point.validation.ts";
 
 // [고객] 내 포인트 잔액 조회
@@ -100,7 +100,7 @@ export async function adjustPointHandler(
   next: NextFunction,
 ) {
   try {
-    const body = adjustPointSchema.parse(req.body);
+    const body = req.body as AdjustPointInput;
     const data = await pointService.adjustPoints(body);
     res.status(200).json({ success: true, data });
   } catch (error) {
