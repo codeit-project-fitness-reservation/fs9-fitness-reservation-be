@@ -3,9 +3,9 @@ import * as reviewService from "./review.service.ts";
 import type { AuthRequest } from "../../middlewares/auth.ts";
 import { AppError } from "../../middlewares/errorHandler.ts";
 import {
-  createReviewSchema,
+  createReviewBodySchema,
   updateReviewSchema,
-  queryReviewSchema,
+  type QueryReviewInput,
 } from "./review.validation.ts";
 
 import { env } from "../../config/env.ts";
@@ -22,7 +22,7 @@ function getReviewImageUrls(req: Request) {
 export async function createReviewHandler(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authReq = req as AuthRequest;
@@ -37,7 +37,7 @@ export async function createReviewHandler(
       body.imgUrls = imgUrls;
     }
 
-    const input = createReviewSchema.parse(body);
+    const input = createReviewBodySchema.parse(body);
 
     const review = await reviewService.createReview(userId, input);
 
@@ -51,24 +51,21 @@ export async function createReviewHandler(
 export async function getReviewsByCenterHandler(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { centerId } = req.params;
-    
-    // Query String 파싱
-    const query = queryReviewSchema.parse(req.query);
-    const page = query.page;
-    const limit = query.limit;
 
     if (!centerId) {
       throw new AppError(400, "센터 ID는 필수입니다", "INVALID_INPUT");
     }
 
+    const { page, limit } = req.query as unknown as QueryReviewInput;
+
     const result = await reviewService.getReviewsByCenter(
       centerId as string,
       page,
-      limit
+      limit,
     );
 
     res.status(200).json({ success: true, data: result });
@@ -81,7 +78,7 @@ export async function getReviewsByCenterHandler(
 export async function getReviewsByClassHandler(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { classId } = req.params;
@@ -90,11 +87,13 @@ export async function getReviewsByClassHandler(
       throw new AppError(400, "클래스 ID는 필수입니다", "INVALID_INPUT");
     }
 
-    const query = queryReviewSchema.parse(req.query);
-    const page = query.page;
-    const limit = query.limit;
+    const { page, limit } = req.query as unknown as QueryReviewInput;
 
-    const result = await reviewService.getReviewsByClass(classId as string, page, limit);
+    const result = await reviewService.getReviewsByClass(
+      classId as string,
+      page,
+      limit,
+    );
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -102,12 +101,11 @@ export async function getReviewsByClassHandler(
   }
 }
 
-
 // [고객] 내 예약 리뷰 조회 핸들러
 export async function getMyReviewByReservationIdHandler(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authReq = req as AuthRequest;
@@ -123,7 +121,7 @@ export async function getMyReviewByReservationIdHandler(
 
     const review = await reviewService.getMyReviewByReservationId(
       userId,
-      reservationId as string
+      reservationId as string,
     );
 
     res.status(200).json({ success: true, data: review });
@@ -136,7 +134,7 @@ export async function getMyReviewByReservationIdHandler(
 export async function updateReviewHandler(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authReq = req as AuthRequest;
@@ -156,12 +154,12 @@ export async function updateReviewHandler(
       body.imgUrls = imgUrls;
     }
 
-    const input = updateReviewSchema.parse(body);
+    const { body: input } = updateReviewSchema.parse({ body });
 
     const review = await reviewService.updateReview(
       userId,
       reviewId as string,
-      input
+      input,
     );
 
     res.status(200).json({ success: true, data: review });
@@ -174,7 +172,7 @@ export async function updateReviewHandler(
 export async function deleteReviewHandler(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const authReq = req as AuthRequest;
