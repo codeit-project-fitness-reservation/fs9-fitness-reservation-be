@@ -1,8 +1,10 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import * as authService from './auth.service.ts';
+import * as centerService from '../center/center.service.ts';
 import { env } from '../../config/env.ts';
 import { AppError } from '../../middlewares/errorHandler.ts';
+import type { AuthRequest } from '../../middlewares/auth.ts';
 
 const ACCESS_COOKIE_NAME = 'accessToken';
 const REFRESH_COOKIE_NAME = 'refreshToken';
@@ -53,6 +55,10 @@ export async function signupHandler(req: Request, res: Response, next: NextFunct
     }
 
     const user = await authService.createUser(userData);
+
+    if (userData.role === 'SELLER' && centerData) {
+      await centerService.createCenter(user.id, centerData);
+    }
 
     res.status(201).json({
       success: true,
@@ -114,7 +120,7 @@ export async function logoutHandler(req: Request, res: Response, next: NextFunct
 
 export async function getUserByIdHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const id = (req.params.id || (req as any).user?.id) as string;
+    const id = (req.params.id || (req as AuthRequest).user?.id) as string;
     const user = await authService.getUserById(id);
     res.status(200).json({
       success: true,
@@ -127,7 +133,7 @@ export async function getUserByIdHandler(req: Request, res: Response, next: Next
 
 export async function updateCustomerHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const id = (req.params.id || (req as any).user?.id) as string;
+    const id = (req.params.id || (req as AuthRequest).user?.id) as string;
     
     const updateData = { ...req.body };
     const profileImgUrl = getProfileImageUrl(req);
@@ -147,7 +153,7 @@ export async function updateCustomerHandler(req: Request, res: Response, next: N
 
 export async function updateSellerHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const id = (req.params.id || (req as any).user?.id) as string;
+    const id = (req.params.id || (req as AuthRequest).user?.id) as string;
 
     const updateData = { ...req.body };
     const profileImgUrl = getProfileImageUrl(req);
