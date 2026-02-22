@@ -6,6 +6,9 @@ const reservationStatusEnum = z.enum(["BOOKED", "CANCELED", "COMPLETED"]);
 const createReservationBodySchema = z.object({
   slotId: z.cuid(),
   userCouponId: z.cuid().optional(),
+  /** 유저가 직접 사용할 포인트 (0 이상, 실제 잔액 범위 내) */
+  usedPoints: z.number().int().min(0).optional().default(0),
+  requestNote: z.string().max(500).optional(),
 });
 export const createReservationSchema = z.object({
   body: createReservationBodySchema,

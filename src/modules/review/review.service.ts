@@ -3,6 +3,7 @@ import * as reviewRepository from "./review.repository.ts";
 import * as reservationRepository from "../reservation/reservation.repository.ts";
 import { AppError } from "../../middlewares/errorHandler.ts";
 import type { CreateReviewInput, UpdateReviewInput } from "./review.validation.ts";
+import { sendNotification } from "../notification/notification.service.ts";
 
 // [고객] 리뷰 생성
 export async function createReview(
@@ -45,7 +46,7 @@ export async function createReview(
     );
   }
 
-  return reviewRepository.createReview({
+  const review = await reviewRepository.createReview({
     reservationId: data.reservationId,
     userId,
     classId: reservation.classId,
@@ -53,6 +54,19 @@ export async function createReview(
     content: data.content || null,
     imgUrls: data.imgUrls || [],
   });
+
+  // [판매자] 새 리뷰 작성 알림
+  const sellerId = (reservation.class as any)?.center?.ownerId;
+  if (sellerId) {
+    void sendNotification({
+      userId: sellerId,
+      title: "새 리뷰가 작성되었습니다",
+      body: `'${(reservation.class as any).title}' 수업에 새 리뷰(${data.rating}점)가 등록되었습니다.`,
+      linkUrl: `/seller/classes/${reservation.classId}`,
+    });
+  }
+
+  return review;
 }
 
 // [공통] 센터별 리뷰 목록 조회

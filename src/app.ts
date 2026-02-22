@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import classRouter from "./modules/class/class.route.ts";
 import reservationRouter from "./modules/reservation/reservation.route.ts";
 import centerRouter from "./modules/center/center.route.ts";
+import notificationRouter from "./modules/notification/notification.route.ts";
 import { logger } from "./middlewares/logger.ts";
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.ts";
 import authRouter from "./modules/auth/auth.route.ts";
@@ -49,9 +50,7 @@ app.use("/api/points", pointRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/users", userRouter);
 app.use("/api/coupons", couponRouter);
-
-
-// 에러핸들러
+app.use("/api/notifications", notificationRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 

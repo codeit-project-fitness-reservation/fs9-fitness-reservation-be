@@ -11,6 +11,7 @@ import type { PaginationResponse } from "../../types/common.types.ts";
 import * as classRepository from "./class.repository.ts";
 import * as reservationService from "../reservation/reservation.service.ts";
 import { AppError } from "../../middlewares/errorHandler.ts";
+import { sendNotification } from "../notification/notification.service.ts";
 
 // 클래스 생성
 export async function createClass(
@@ -294,6 +295,14 @@ export async function approveClass(classId: string) {
     ClassStatus.APPROVED
   );
 
+  // [판매자] 클래스 승인 알림
+  void sendNotification({
+    userId: updatedClass.center.ownerId,
+    title: "클래스가 승인되었습니다",
+    body: `'${updatedClass.title}' 클래스가 관리자에게 승인되었습니다.`,
+    linkUrl: `/seller/classes`,
+  });
+
   return updatedClass;
 }
 
@@ -319,6 +328,14 @@ export async function rejectClass(classId: string, data: RejectClassInput) {
     ClassStatus.REJECTED,
     data.rejectReason
   );
+
+  // [판매자] 클래스 반려 알림
+  void sendNotification({
+    userId: updatedClass.center.ownerId,
+    title: "클래스가 반려되었습니다",
+    body: `'${updatedClass.title}' 클래스가 반려되었습니다.${data.rejectReason ? ` 사유: ${data.rejectReason}` : ""}`,
+    linkUrl: `/seller/classes`,
+  });
 
   return updatedClass;
 }
