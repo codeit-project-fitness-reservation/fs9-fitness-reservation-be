@@ -29,14 +29,20 @@ export function removeClient(userId: string, res: Response) {
   }
 }
 
-export function publishToUser(userId: string, event: SseEventName, data: unknown) {
+export function publishToUser(
+  userId: string,
+  event: SseEventName,
+  data: unknown,
+) {
   const set = clients.get(userId);
   if (!set || set.size === 0) return;
 
   for (const res of set) {
     try {
       writeEvent(res, event, data);
-    } catch {
+    } catch (err) {
+      console.error("SSE 전송 실패:", err);
+      set.delete(res);
     }
   }
 }
@@ -48,4 +54,3 @@ export function publishConnected(res: Response) {
 export function publishPing(res: Response) {
   writeEvent(res, "ping", { t: Date.now() });
 }
-

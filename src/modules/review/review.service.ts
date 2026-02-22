@@ -56,12 +56,12 @@ export async function createReview(
   });
 
   // [판매자] 새 리뷰 작성 알림
-  const sellerId = (reservation.class as any)?.center?.ownerId;
+  const sellerId = reservation.class?.center?.ownerId;
   if (sellerId) {
     void sendNotification({
       userId: sellerId,
       title: "새 리뷰가 작성되었습니다",
-      body: `'${(reservation.class as any).title}' 수업에 새 리뷰(${data.rating}점)가 등록되었습니다.`,
+      body: `'${reservation.class.title}' 수업에 새 리뷰(${data.rating}점)가 등록되었습니다.`,
       linkUrl: `/seller/classes/${reservation.classId}`,
     });
   }

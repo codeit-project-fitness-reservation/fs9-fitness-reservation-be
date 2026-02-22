@@ -1,4 +1,4 @@
-import prisma from "../../config/prisma.js";
+import prisma from "../../config/prisma.ts";
 import { Prisma } from "@prisma/client";
 
 /** 읽지 않은 알림만, 최근 30일 이내 */
