@@ -6,9 +6,6 @@ const reservationStatusEnum = z.enum(["BOOKED", "CANCELED", "COMPLETED"]);
 const createReservationBodySchema = z.object({
   slotId: z.cuid(),
   userCouponId: z.cuid().optional(),
-  /** 유저가 직접 사용할 포인트 (0 이상, 실제 잔액 범위 내) */
-  usedPoints: z.number().int().min(0).optional().default(0),
-  requestNote: z.string().max(500).optional(),
 });
 export const createReservationSchema = z.object({
   body: createReservationBodySchema,
@@ -24,8 +21,8 @@ export const cancelReservationSchema = z.object({
 
 // 예약 조회
 const queryReservationQuerySchema = z.object({
-  page: z.preprocess((val) => Number(val), z.number().int().min(1)).optional().default(1),
-  limit: z.preprocess((val) => Number(val), z.number().int().min(1).max(100)).optional().default(10),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   userId: z.cuid().optional(),
   classId: z.cuid().optional(),
   slotId: z.cuid().optional(),

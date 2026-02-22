@@ -110,8 +110,8 @@ export const rejectClassSchema = z.object({
 export const createSlotSchema = z.object({
   body: z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "날짜 형식이 필요합니다"),
-    hour: z.number().int().min(0).max(23, "시간은 0-23 사이여야 합니다"), // hour는 드롭다운에서 시간대 선택
-    capacity: z.number().int().min(1).max(100),
+    hour: z.coerce.number().int().min(0).max(23, "시간은 0-23 사이여야 합니다"),
+    capacity: z.coerce.number().int().min(1).max(100),
     isOpen: z.boolean().default(true),
   }),
 });
