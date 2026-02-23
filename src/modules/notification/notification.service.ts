@@ -17,8 +17,8 @@ type AuthUser = {
 export async function sendNotification(input: {
   userId: string;
   title: string;
-  body?: string;
-  linkUrl?: string;
+  body?: string | undefined;
+  linkUrl?: string | undefined;
 }) {
   const created = await notificationRepo.createNotification({
     userId: input.userId,
