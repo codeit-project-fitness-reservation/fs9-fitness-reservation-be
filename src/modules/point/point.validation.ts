@@ -42,7 +42,7 @@ export const adjustPointSchema = z.object({
   body: z.object({
     userId: z.string().min(1, "유저 ID가 필요합니다"),
     amount: z.number().int().refine((val) => val !== 0, {
-      message: "금액은 0이 아니어야 합니다",
+      error: "금액은 0이 아니어야 합니다",
     }),
     memo: z.string().min(1, "사유를 입력해주세요"),
   }),
