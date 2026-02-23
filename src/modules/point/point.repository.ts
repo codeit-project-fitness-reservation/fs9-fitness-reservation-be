@@ -181,7 +181,7 @@ export async function getSettlementByClass(params: {
           },
         },
         select: {
-          paidPoints: true,
+          pricePoints: true,
         },
       },
     },
@@ -192,7 +192,7 @@ export async function getSettlementByClass(params: {
       classId: cls.id,
       classTitle: cls.title,
       bannerUrl: cls.bannerUrl,
-      totalRevenue: cls.reservations.reduce((sum, r) => sum + r.paidPoints, 0),
+      totalRevenue: cls.reservations.reduce((sum, r) => sum + r.pricePoints, 0),
     }))
     .filter((cls) => cls.totalRevenue > 0)
     .sort((a, b) => b.totalRevenue - a.totalRevenue);
