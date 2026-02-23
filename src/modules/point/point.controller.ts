@@ -1,13 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
 import type { AuthRequest } from "../../middlewares/auth.ts";
 import * as pointService from "./point.service.ts";
-import {
-  chargePointSchema,
-  queryMyPointHistorySchema,
-  querySellerSettlementSchema,
-  querySellerTransactionsSchema,
-  adjustPointSchema,
-  queryAdminPointHistorySchema,
+import type {
+  ChargePointInput,
+  QueryMyPointHistoryInput,
+  QuerySellerSettlementInput,
+  QuerySellerTransactionsInput,
+  QueryAdminPointHistoryInput,
+  AdjustPointInput,
 } from "./point.validation.ts";
 
 // [고객] 내 포인트 잔액 조회
@@ -33,8 +33,10 @@ export async function getMyPointHistoryHandler(
 ) {
   try {
     const authReq = req as AuthRequest;
-    const query = queryMyPointHistorySchema.parse(req.query);
-    const data = await pointService.getMyPointHistory(authReq.user.id, query);
+    const data = await pointService.getMyPointHistory(
+      authReq.user.id,
+      req.query as unknown as QueryMyPointHistoryInput,
+    );
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
@@ -49,8 +51,10 @@ export async function chargePointHandler(
 ) {
   try {
     const authReq = req as AuthRequest;
-    const body = chargePointSchema.parse(req.body);
-    const data = await pointService.chargePoints(authReq.user.id, body);
+    const data = await pointService.chargePoints(
+      authReq.user.id,
+      req.body as ChargePointInput,
+    );
     res.status(201).json({ success: true, data });
   } catch (error) {
     next(error);
@@ -66,8 +70,10 @@ export async function getSellerSettlementHandler(
 ) {
   try {
     const authReq = req as AuthRequest;
-    const query = querySellerSettlementSchema.parse(req.query);
-    const data = await pointService.getSellerSettlement(authReq.user.id, query);
+    const data = await pointService.getSellerSettlement(
+      authReq.user.id,
+      req.query as unknown as QuerySellerSettlementInput,
+    );
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
@@ -82,10 +88,9 @@ export async function getSellerTransactionsHandler(
 ) {
   try {
     const authReq = req as AuthRequest;
-    const query = querySellerTransactionsSchema.parse(req.query);
     const data = await pointService.getSellerTransactions(
       authReq.user.id,
-      query,
+      req.query as unknown as QuerySellerTransactionsInput,
     );
     res.status(200).json({ success: true, data });
   } catch (error) {
@@ -100,7 +105,7 @@ export async function adjustPointHandler(
   next: NextFunction,
 ) {
   try {
-    const body = adjustPointSchema.parse(req.body);
+    const body = req.body as AdjustPointInput;
     const data = await pointService.adjustPoints(body);
     res.status(200).json({ success: true, data });
   } catch (error) {
@@ -115,8 +120,9 @@ export async function getAdminPointHistoryHandler(
   next: NextFunction,
 ) {
   try {
-    const query = queryAdminPointHistorySchema.parse(req.query);
-    const data = await pointService.getAdminPointHistory(query);
+    const data = await pointService.getAdminPointHistory(
+      req.query as unknown as QueryAdminPointHistoryInput,
+    );
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);

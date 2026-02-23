@@ -20,14 +20,14 @@ export const createCouponTemplate = async (
   if (userRole === UserRole.SELLER) {
     const seller = await findUserById(issuerId);
     if (!seller || !seller.center) {
-      throw new Error("센터 정보를 찾을 수 없습니다.");
+      throw new AppError(404, "센터 정보를 찾을 수 없습니다.", "CENTER_NOT_FOUND");
     }
     centerId = seller.center.id;
   }
 
   // 만료일 체크
   if (new Date(input.expiresAt) < new Date()) {
-    throw new Error("만료일은 현재 시간 이후여야 합니다.");
+    throw new AppError(400, "만료일은 현재 시간 이후여야 합니다.", "INVALID_EXPIRES_AT");
   }
 
   const { discountType, usageValue, ...rest } = input;
@@ -38,7 +38,7 @@ export const createCouponTemplate = async (
 
   // 비율 할인 유효성 검사 (0~100%)
   if (discountPercentage !== null && (discountPercentage < 0 || discountPercentage > 100)) {
-    throw new Error("할인율은 0%에서 100% 사이여야 합니다.");
+    throw new AppError(400, "할인율은 0%에서 100% 사이여야 합니다.", "INVALID_DISCOUNT_PERCENTAGE");
   }
 
   return await couponRepo.createTemplate({
@@ -62,23 +62,23 @@ export const giveCoupon = async (issuerId: string, input: GiveCouponInput) => {
   // 템플릿 존재 여부 확인
   const template = await couponRepo.findTemplateById(templateId);
   if (!template) {
-    throw new Error("쿠폰 템플릿을 찾을 수 없습니다.");
+    throw new AppError(404, "쿠폰 템플릿을 찾을 수 없습니다.", "COUPON_TEMPLATE_NOT_FOUND");
   }
 
   // 본인이 생성한 템플릿인지 확인
   if (template.issuerId !== issuerId) {
-    throw new Error("본인이 생성한 쿠폰만 지급할 수 있습니다.");
+    throw new AppError(403, "본인이 생성한 쿠폰만 지급할 수 있습니다.", "FORBIDDEN");
   }
 
   // 만료된 템플릿인지 체크
   if (template.expiresAt && new Date(template.expiresAt) < new Date()) {
-    throw new Error("만료된 쿠폰 템플릿입니다.");
+    throw new AppError(400, "만료된 쿠폰 템플릿입니다.", "COUPON_TEMPLATE_EXPIRED");
   }
 
-  // 지급 대상 유저 존재 여부 확인 (문제 #4 보완)
+  // 지급 대상 유저 존재 여부 확인
   const targetUser = await findUserById(userId);
   if (!targetUser) {
-    throw new Error("존재하지 않는 유저입니다.");
+    throw new AppError(404, "존재하지 않는 유저입니다.", "USER_NOT_FOUND");
   }
 
   // 발급 시 템플릿 정보를 스냅샷으로 복사 (템플릿 삭제 후에도 쿠폰 유효)
@@ -99,16 +99,18 @@ export const updateCouponTemplate = async (
   const { discountType, usageValue, ...rest } = input;
 
   const existing = await couponRepo.findTemplateById(id);
-  if (!existing) throw new Error("쿠폰 템플릿을 찾을 수 없습니다.");
+  if (!existing) {
+    throw new AppError(404, "쿠폰 템플릿을 찾을 수 없습니다.", "COUPON_TEMPLATE_NOT_FOUND");
+  }
 
   // 본인 확인
   if (existing.issuerId !== issuerId) {
-    throw new Error("본인이 생성한 쿠폰만 수정할 수 있습니다.");
+    throw new AppError(403, "본인이 생성한 쿠폰만 수정할 수 있습니다.", "FORBIDDEN");
   }
 
-  // 만료일 변경 시 과거 날짜 체크 (문제 #6 보완)
+  // 만료일 변경 시 과거 날짜 체크
   if (rest.expiresAt && new Date(rest.expiresAt) < new Date()) {
-    throw new Error("만료일은 현재 시간 이후여야 합니다.");
+    throw new AppError(400, "만료일은 현재 시간 이후여야 합니다.", "INVALID_EXPIRES_AT");
   }
 
   const updateData: any = { ...rest };
@@ -116,11 +118,9 @@ export const updateCouponTemplate = async (
   // 할인 정보가 변경되는 경우 처리
   if (discountType || usageValue) {
     if (discountType && usageValue) {
-      // 타입과 값이 모두 있는 경우
       if (discountType === "PERCENTAGE") {
-        // 유효성 검사 먼저 (문제 #5 보완)
         if (usageValue < 0 || usageValue > 100) {
-          throw new Error("할인율은 0%에서 100% 사이여야 합니다.");
+          throw new AppError(400, "할인율은 0%에서 100% 사이여야 합니다.", "INVALID_DISCOUNT_PERCENTAGE");
         }
         updateData.discountPoints = null;
         updateData.discountPercentage = usageValue;
@@ -129,19 +129,16 @@ export const updateCouponTemplate = async (
         updateData.discountPercentage = null;
       }
     } else if (usageValue) {
-      // 값만 들어온 경우 기존 타입 유지
       if (existing.discountPercentage !== null) {
-        // 유효성 검사 먼저 (문제 #5 보완)
         if (usageValue < 0 || usageValue > 100) {
-          throw new Error("할인율은 0%에서 100% 사이여야 합니다.");
+          throw new AppError(400, "할인율은 0%에서 100% 사이여야 합니다.", "INVALID_DISCOUNT_PERCENTAGE");
         }
         updateData.discountPercentage = usageValue;
       } else {
         updateData.discountPoints = usageValue;
       }
     } else if (discountType) {
-      // 타입만 들어온 경우 → 에러 (값 불일치 방지)
-      throw new Error("할인 타입을 변경하려면 할인 값도 함께 입력해야 합니다.");
+      throw new AppError(400, "할인 타입을 변경하려면 할인 값도 함께 입력해야 합니다.", "INVALID_DISCOUNT_TYPE");
     }
   }
 
@@ -152,12 +149,12 @@ export const updateCouponTemplate = async (
 export const deleteCouponTemplate = async (issuerId: string, id: string) => {
   const template = await couponRepo.findTemplateById(id);
   if (!template) {
-    throw new Error("쿠폰 템플릿을 찾을 수 없습니다.");
+    throw new AppError(404, "쿠폰 템플릿을 찾을 수 없습니다.", "COUPON_TEMPLATE_NOT_FOUND");
   }
 
   // 본인 확인
   if (template.issuerId !== issuerId) {
-    throw new Error("본인이 생성한 쿠폰만 삭제할 수 있습니다.");
+    throw new AppError(403, "본인이 생성한 쿠폰만 삭제할 수 있습니다.", "FORBIDDEN");
   }
 
   return await couponRepo.deleteTemplate(id);

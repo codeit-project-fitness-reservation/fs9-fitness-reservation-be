@@ -325,16 +325,44 @@ export async function getSellerReservations(
     throw new AppError(404, "센터 정보를 찾을 수 없습니다", "CENTER_NOT_FOUND");
   }
 
-  const { page = 1, limit = 10, ...restQuery } = query;
+  const {
+    page = 1,
+    limit = 10,
+    keyword,
+    searchType,
+    startDate,
+    endDate,
+    ...restQuery
+  } = query;
   const skip = (page - 1) * limit;
 
   const where: any = { ...restQuery };
-  if (restQuery.startDate || restQuery.endDate) {
-    where.slot = where.slot || {};
-    where.slot.startAt = {};
-    if (restQuery.startDate)
-      where.slot.startAt.gte = new Date(restQuery.startDate);
-    if (restQuery.endDate) where.slot.startAt.lte = new Date(restQuery.endDate);
+
+  if (keyword) {
+    if (searchType === "User") {
+      where.user = {
+        OR: [
+          { nickname: { contains: keyword, mode: "insensitive" } },
+          { email: { contains: keyword, mode: "insensitive" } },
+        ],
+      };
+    } else if (searchType === "Class") {
+      where.class = {
+        title: { contains: keyword, mode: "insensitive" },
+      };
+    } else if (searchType === "Center") {
+      where.class = {
+        center: {
+          name: { contains: keyword, mode: "insensitive" },
+        },
+      };
+    }
+  }
+
+  if (startDate || endDate) {
+    where.slot = { startAt: {} };
+    if (startDate) where.slot.startAt.gte = new Date(startDate);
+    if (endDate) where.slot.startAt.lte = new Date(endDate);
   }
 
   const [items, total] = await Promise.all([
@@ -404,14 +432,13 @@ export async function cancelReservationBySeller(
   return cancelReservation(sellerId, reservationId, data, UserRole.SELLER);
 }
 
-// [판매자] 클래스 수정/삭제시 예약 자동 취소 및 환불
-export async function cancelReservationsByClassChange(
-  classId: string,
+// 예약 목록을 일괄 취소 + 포인트 환불 (트랜잭션)
+async function cancelReservationsInBulk(
+  reservations: Awaited<
+    ReturnType<typeof reservationRepository.findFutureReservationsByClassId>
+  >,
   reason: string,
-) {
-  const reservations =
-    await reservationRepository.findFutureReservationsByClassId(classId);
-
+): Promise<{ canceledCount: number }> {
   if (reservations.length === 0) {
     return { canceledCount: 0 };
   }
@@ -430,17 +457,32 @@ export async function cancelReservationsByClassChange(
         },
       });
 
+      const currentUser = await tx.user.findUnique({
+        where: { id: reservation.userId },
+        select: { pointBalance: true },
+      });
+
       await pointService.refundPoints(
         tx,
         reservation.userId,
         reservation.paidPoints,
-        reservation.user.pointBalance,
+        currentUser?.pointBalance ?? reservation.user.pointBalance,
         reservation.id,
       );
     }
   });
 
   return { canceledCount: reservations.length };
+}
+
+// [판매자] 클래스 수정/삭제시 예약 자동 취소 및 환불
+export async function cancelReservationsByClassChange(
+  classId: string,
+  reason: string,
+) {
+  const reservations =
+    await reservationRepository.findFutureReservationsByClassId(classId);
+  return cancelReservationsInBulk(reservations, reason);
 }
 
 // [판매자] 슬롯 삭제시 예약 자동 취소 및 환불
@@ -450,36 +492,7 @@ export async function cancelReservationsBySlotChange(
 ) {
   const reservations =
     await reservationRepository.findReservationsBySlotId(slotId);
-
-  if (reservations.length === 0) {
-    return { canceledCount: 0 };
-  }
-
-  const now = new Date();
-
-  await prisma.$transaction(async (tx) => {
-    for (const reservation of reservations) {
-      await tx.reservation.update({
-        where: { id: reservation.id },
-        data: {
-          status: ReservationStatus.CANCELED,
-          canceledAt: now,
-          canceledBy: UserRole.SELLER,
-          cancelNote: reason,
-        },
-      });
-
-      await pointService.refundPoints(
-        tx,
-        reservation.userId,
-        reservation.paidPoints,
-        reservation.user.pointBalance,
-        reservation.id,
-      );
-    }
-  });
-
-  return { canceledCount: reservations.length };
+  return cancelReservationsInBulk(reservations, reason);
 }
 
 // [판매자] 예약 완료 처리

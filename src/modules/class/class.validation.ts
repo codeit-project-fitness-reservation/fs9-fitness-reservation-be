@@ -23,7 +23,7 @@ export const createClassSchema = z.object({
       .max(30, "클래스명은 30자 이하여야 합니다"),
     category: z.string(),
     level: z.enum(CLASS_LEVELS, {
-      message: `난이도는 ${CLASS_LEVELS.join(", ")} 중 하나여야 합니다`,
+      error: `난이도는 ${CLASS_LEVELS.join(", ")} 중 하나여야 합니다`,
     }),
     description: z
       .string()
@@ -110,8 +110,8 @@ export const rejectClassSchema = z.object({
 export const createSlotSchema = z.object({
   body: z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "날짜 형식이 필요합니다"),
-    hour: z.number().int().min(0).max(23, "시간은 0-23 사이여야 합니다"), // hour는 드롭다운에서 시간대 선택
-    capacity: z.number().int().min(1).max(100),
+    hour: z.coerce.number().int().min(0).max(23, "시간은 0-23 사이여야 합니다"),
+    capacity: z.coerce.number().int().min(1).max(100),
     isOpen: z.boolean().default(true),
   }),
 });
@@ -141,7 +141,7 @@ export const generateSlotsSchema = z.object({
         return start <= end;
       },
       {
-        message: "시작 날짜는 종료 날짜보다 이전이어야 합니다",
+        error: "시작 날짜는 종료 날짜보다 이전이어야 합니다",
       },
     ),
 });

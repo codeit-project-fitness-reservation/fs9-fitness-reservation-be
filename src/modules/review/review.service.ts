@@ -56,12 +56,12 @@ export async function createReview(
   });
 
   // [판매자] 새 리뷰 작성 알림
-  const sellerId = (reservation.class as any)?.center?.ownerId;
+  const sellerId = reservation.class?.center?.ownerId;
   if (sellerId) {
     void sendNotification({
       userId: sellerId,
       title: "새 리뷰가 작성되었습니다",
-      body: `'${(reservation.class as any).title}' 수업에 새 리뷰(${data.rating}점)가 등록되었습니다.`,
+      body: `'${reservation.class.title}' 수업에 새 리뷰(${data.rating}점)가 등록되었습니다.`,
       linkUrl: `/seller/classes/${reservation.classId}`,
     });
   }
@@ -93,6 +93,28 @@ export async function getReviewsByCenter(
     },
   };
 }
+
+// [공통] 클래스별 리뷰 목록 조회
+export async function getReviewsByClass(
+  classId: string,
+  page: number = 1,
+  limit: number = 20
+) {
+  const skip = (page - 1) * limit;
+  const reviews = await reviewRepository.findReviewsByClassId(classId, skip, limit);
+  const totalCount = await reviewRepository.countReviewsByClassId(classId);
+
+  return {
+    reviews,
+    pagination: {
+      totalCount,
+      totalPage: Math.ceil(totalCount / limit),
+      currentPage: page,
+      limit,
+    },
+  };
+}
+
 
 // [고객] 내 예약 리뷰 조회
 export async function getMyReviewByReservationId(

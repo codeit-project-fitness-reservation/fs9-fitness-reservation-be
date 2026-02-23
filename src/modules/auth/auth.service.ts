@@ -4,6 +4,9 @@ import authRepo from './auth.repository.ts';
 import { env } from '../../config/env.ts';
 import { AppError } from '../../middlewares/errorHandler.ts';
 import type { UpdateCustomerInput, UpdateSellerInput } from './auth.validation.ts';
+import * as centerService from '../center/center.service.ts';
+import prisma from '../../config/prisma.ts';
+
 
 async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
@@ -43,8 +46,8 @@ function filterSensitiveUserData(user: any) {
 function createToken(user: any, type: 'access' | 'refresh') {
   const payload = { id: user.id, email: user.email, role: user.role };
   const secret = type === 'refresh' ? env.JWT_REFRESH_SECRET : env.JWT_SECRET;
-  const expiresIn = type === 'refresh' ? '2w' : '1h';
-  return jwt.sign(payload, secret as string, { expiresIn });
+  const expiresIn = type === 'refresh' ? env.JWT_REFRESH_EXPIRES_IN : env.JWT_EXPIRES_IN;
+  return jwt.sign(payload, secret, { expiresIn } as any);
 }
 
 export async function signIn(email: string, password: string) {
@@ -123,17 +126,16 @@ export async function updateCustomerProfile(
   }
 
   if (Object.keys(updateData).length === 0) {
-    // 변경사항 없으면 조회해서 반환
     const user = await authRepo.findById(userId);
+    if (!user) {
+      throw new AppError(404, '존재하지 않는 유저입니다.', "USER_NOT_FOUND");
+    }
     return filterSensitiveUserData(user);
   }
 
   const updatedUser = await authRepo.update(userId, updateData);
   return filterSensitiveUserData(updatedUser);
 }
-
-import * as centerService from '../center/center.service.ts';
-import prisma from '../../config/prisma.ts';
 
 // 판매자 프로필 수정 (User + Center 정보 동시 수정)
 export async function updateSellerProfile(

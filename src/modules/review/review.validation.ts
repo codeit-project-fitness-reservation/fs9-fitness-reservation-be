@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createReviewSchema = z.object({
+export const createReviewBodySchema = z.object({
   reservationId: z.string().min(1, "예약 ID는 필수입니다"),
   rating: z.coerce
     .number()
@@ -14,16 +14,19 @@ export const createReviewSchema = z.object({
   imgUrls: z.array(z.string().url("올바른 URL 형식이 아닙니다")).optional(),
 });
 
-// reservationId 제외하고 모두 optional로 변경
-export const updateReviewSchema = createReviewSchema
-  .omit({ reservationId: true })
-  .partial();
+export const createReviewSchema = z.object({ body: createReviewBodySchema });
 
-export const queryReviewSchema = z.object({
+export const updateReviewSchema = z.object({
+  body: createReviewBodySchema.omit({ reservationId: true }).partial(),
+});
+
+const queryReviewQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 });
 
-export type CreateReviewInput = z.infer<typeof createReviewSchema>;
-export type UpdateReviewInput = z.infer<typeof updateReviewSchema>;
-export type QueryReviewInput = z.infer<typeof queryReviewSchema>;
+export const queryReviewSchema = z.object({ query: queryReviewQuerySchema });
+
+export type CreateReviewInput = z.infer<typeof createReviewBodySchema>;
+export type UpdateReviewInput = z.infer<typeof updateReviewSchema>["body"];
+export type QueryReviewInput = z.infer<typeof queryReviewQuerySchema>;

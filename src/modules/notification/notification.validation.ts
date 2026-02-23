@@ -37,7 +37,7 @@ export const markReadSchema = z.object({
     id: z.string().min(1, "id는 필수입니다"),
   }),
   body: z.object({
-    isRead: z.boolean({ required_error: "isRead는 필수입니다" }),
+    isRead: z.boolean({ error: "isRead는 필수입니다" }),
   }),
 });
 
