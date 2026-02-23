@@ -20,9 +20,12 @@ export function validate(schema: z.ZodType) {
         req.body = data.body;
       }
       if (data.query) {
-
-        Object.keys(data.query).forEach((key) => {
-          (req.query as any)[key] = data.query[key];
+        const mergedQuery = { ...req.query, ...(data.query as object) };
+        Object.defineProperty(req, 'query', {
+          value: mergedQuery,
+          writable: true,
+          configurable: true,
+          enumerable: true,
         });
       }
       if (data.params) {
