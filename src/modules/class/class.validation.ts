@@ -23,7 +23,7 @@ export const createClassSchema = z.object({
       .max(30, "클래스명은 30자 이하여야 합니다"),
     category: z.string(),
     level: z.enum(CLASS_LEVELS, {
-      message: `난이도는 ${CLASS_LEVELS.join(", ")} 중 하나여야 합니다`,
+      error: `난이도는 ${CLASS_LEVELS.join(", ")} 중 하나여야 합니다`,
     }),
     description: z
       .string()
@@ -141,7 +141,7 @@ export const generateSlotsSchema = z.object({
         return start <= end;
       },
       {
-        message: "시작 날짜는 종료 날짜보다 이전이어야 합니다",
+        error: "시작 날짜는 종료 날짜보다 이전이어야 합니다",
       },
     ),
 });
