@@ -3,8 +3,8 @@ import { z } from 'zod';
 const phoneSchema = z
   .string()
   .transform((v) => v.replace(/\D/g, ''))
-  .refine((v) => /^\d{11}$/.test(v), {
-    error: '전화번호는 숫자 11자리여야 합니다',
+  .refine((v) => /^\d{10,11}$/.test(v), {
+    error: '전화번호는 숫자 10~11자리이어어야 합니다',
   });
 
 export const signUpSchema = z.object({
