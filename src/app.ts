@@ -30,7 +30,11 @@ app.use(
 );
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: [
+      "https://fit-match.co.kr",
+      "https://www.fit-match.co.kr",
+      "http://localhost:3000",
+    ],
     credentials: true,
   }),
 );
