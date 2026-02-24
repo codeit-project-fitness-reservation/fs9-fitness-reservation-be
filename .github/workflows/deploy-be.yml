@@ -37,7 +37,7 @@ jobs:
         run: |
           mkdir -p deploy-app
           cp package.json pnpm-lock.yaml deploy-app/
-          cp -r dist prisma deploy-app/
+          cp -r src prisma deploy-app/
           cd deploy-app && tar czf ../deploy.tar.gz .
 
       - name: Upload bundle via SCP
@@ -63,6 +63,7 @@ jobs:
             mkdir -p app
             find app -mindepth 1 -delete 2>/dev/null || true
             tar xzf deploy.tar.gz -C app
+            cd app
             cat > .env << 'BE_ENV_END'
             ${{ secrets.BE_ENV }}
             BE_ENV_END
