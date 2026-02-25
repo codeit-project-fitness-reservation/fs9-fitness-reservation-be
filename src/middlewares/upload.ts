@@ -1,17 +1,16 @@
 import multer from 'multer';
 import type { Request, Response, NextFunction } from 'express';
 import {
-  createStorage,
+  getStorage,
   imageFileFilter,
   MAX_FILE_SIZE,
-  UPLOAD_PATHS,
 } from '../utils/upload/upload.config.ts';
 
 // ──────────────────────────────────────────────
 // 클래스 이미지 업로드
 // ──────────────────────────────────────────────
 const classUpload = multer({
-  storage: createStorage(UPLOAD_PATHS.CLASS),
+  storage: getStorage('CLASS'),
   fileFilter: imageFileFilter,
   limits: { fileSize: MAX_FILE_SIZE, files: 3 },
 });
@@ -30,7 +29,7 @@ export const uploadClassImages = (req: Request, res: Response, next: NextFunctio
 // 프로필 이미지 업로드
 // ──────────────────────────────────────────────
 const profileUpload = multer({
-  storage: createStorage(UPLOAD_PATHS.PROFILE),
+  storage: getStorage('PROFILE'),
   fileFilter: imageFileFilter,
   limits: { fileSize: MAX_FILE_SIZE, files: 1 },
 });
@@ -49,7 +48,7 @@ export const uploadProfileImage = (req: Request, res: Response, next: NextFuncti
 // 리뷰 이미지 업로드
 // ──────────────────────────────────────────────
 const reviewUpload = multer({
-  storage: createStorage(UPLOAD_PATHS.REVIEW),
+  storage: getStorage('REVIEW'),
   fileFilter: imageFileFilter,
   limits: { fileSize: MAX_FILE_SIZE, files: 3 },
 });

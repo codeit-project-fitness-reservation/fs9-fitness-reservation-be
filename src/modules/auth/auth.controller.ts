@@ -5,15 +5,13 @@ import * as centerService from '../center/center.service.ts';
 import { env } from '../../config/env.ts';
 import { AppError } from '../../middlewares/errorHandler.ts';
 import type { AuthRequest } from '../../middlewares/auth.ts';
+import { getFileUrl } from '../../utils/upload/upload.config.ts';
 
 const ACCESS_COOKIE_NAME = 'accessToken';
 const REFRESH_COOKIE_NAME = 'refreshToken';
 
-// 프로필 이미지 URL 생성 헬퍼
 function getProfileImageUrl(req: Request) {
-  if (!req.file) return undefined;
-  const baseUrl = `${env.SERVER_URL}/uploads/profiles`;
-  return `${baseUrl}/${req.file.filename}`;
+  return getFileUrl(req.file, 'PROFILE');
 }
 
 function getCookieOptions(kind: 'access' | 'refresh') {
@@ -137,9 +135,6 @@ export async function updateCustomerHandler(req: Request, res: Response, next: N
     
     const updateData = { ...req.body };
     const profileImgUrl = getProfileImageUrl(req);
-    if (profileImgUrl) {
-      updateData.profileImgUrl = profileImgUrl;
-    }
 
     const user = await authService.updateCustomerProfile(id, updateData, profileImgUrl);
     res.status(200).json({
@@ -157,9 +152,6 @@ export async function updateSellerHandler(req: Request, res: Response, next: Nex
 
     const updateData = { ...req.body };
     const profileImgUrl = getProfileImageUrl(req);
-    if (profileImgUrl) {
-      updateData.profileImgUrl = profileImgUrl;
-    }
 
     const user = await authService.updateSellerProfile(id, updateData, profileImgUrl);
     res.status(200).json({

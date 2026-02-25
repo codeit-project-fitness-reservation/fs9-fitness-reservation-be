@@ -12,6 +12,6 @@ export default {
     "^(..\/.*)\\.js$": "$1",
   },
   testMatch: ["**/*.spec.ts", "**/*.test.ts"],
-  testPathIgnorePatterns: ["/node_modules/", "/src/tests/e2e/"],
+  testPathIgnorePatterns: ["/node_modules/"],
   setupFilesAfterEnv: ["<rootDir>/src/tests/prisma-mock.ts"],
 };

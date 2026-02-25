@@ -28,7 +28,16 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 );
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "https://fit-match.co.kr",
+      "https://www.fit-match.co.kr",
+      "http://localhost:3001",
+    ],
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
