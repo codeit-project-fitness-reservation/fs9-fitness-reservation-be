@@ -8,14 +8,10 @@ import {
   type QueryReviewInput,
 } from "./review.validation.ts";
 
-import { env } from "../../config/env.ts";
+import { getFileUrls } from "../../utils/upload/upload.config.ts";
 
-// 리뷰 이미지 URL 생성 헬퍼
 function getReviewImageUrls(req: Request) {
-  const files = req.files as any[];
-  if (!files || !Array.isArray(files)) return [];
-  const baseUrl = `${env.SERVER_URL}/uploads/reviews`;
-  return files.map((file) => `${baseUrl}/${file.filename}`);
+  return getFileUrls(req.files as Express.Multer.File[] | undefined, 'REVIEW');
 }
 
 // [고객] 리뷰 생성 핸들러
