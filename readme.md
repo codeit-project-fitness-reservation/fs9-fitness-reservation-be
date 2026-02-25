@@ -126,16 +126,18 @@ erDiagram
 | POST   | `/api/auth/logout`      | 로그아웃         | 인증     |
 | POST   | `/api/auth/refresh`     | 토큰 갱신        | -        |
 | GET    | `/api/auth/me`          | 내 정보 조회     | 인증     |
-| PATCH  | `/api/auth/customer/me` | 고객 프로필 수정 | CUSTOMER |
-| PATCH  | `/api/auth/seller/me`   | 셀러 프로필 수정 | SELLER   |
+| PUT    | `/api/auth/customer/me` | 고객 프로필 수정 | CUSTOMER |
+| PUT    | `/api/auth/seller/me`   | 셀러 프로필 수정 | SELLER   |
 
 ### Centers
 
-| Method | Endpoint           | 설명           | 권한   |
-| ------ | ------------------ | -------------- | ------ |
-| GET    | `/api/centers`     | 센터 목록 조회 | -      |
-| GET    | `/api/centers/:id` | 센터 상세 조회 | -      |
-| PATCH  | `/api/centers/:id` | 센터 정보 수정 | SELLER |
+| Method | Endpoint              | 설명             | 권한   |
+| ------ | --------------------- | ---------------- | ------ |
+| GET    | `/api/centers`        | 센터 목록 조회   | -      |
+| GET    | `/api/centers/me`     | 내 센터 조회     | SELLER |
+| GET    | `/api/centers/geocode`| 주소→위경도      | -      |
+| GET    | `/api/centers/:id`    | 센터 상세 조회   | -      |
+| PATCH  | `/api/centers/:id`    | 센터 정보 수정   | SELLER |
 
 ### Classes
 
@@ -161,16 +163,19 @@ erDiagram
 | GET    | `/api/reservations`              | 예약 목록 조회 | 인증     |
 | POST   | `/api/reservations`              | 예약 생성      | CUSTOMER |
 | PATCH  | `/api/reservations/:id/cancel`   | 예약 취소      | 인증     |
-| PATCH  | `/api/reservations/:id/complete` | 예약 완료 처리 | ADMIN    |
+| PATCH  | `/api/reservations/:id/complete` | 예약 완료 처리 | SELLER   |
 
 ### Points
 
-| Method | Endpoint             | 설명               | 권한     |
-| ------ | -------------------- | ------------------ | -------- |
-| GET    | `/api/points`        | 포인트 내역 조회   | 인증     |
-| POST   | `/api/points/charge` | 포인트 충전 (토스) | CUSTOMER |
-| POST   | `/api/points/admin`  | 포인트 수동 지급   | ADMIN    |
-| GET    | `/api/points/sales`  | 셀러 매출 조회     | SELLER   |
+| Method | Endpoint                     | 설명                 | 권한           |
+| ------ | ---------------------------- | -------------------- | -------------- |
+| GET    | `/api/points/me`             | 내 포인트 잔액 조회  | 인증           |
+| GET    | `/api/points/me/history`     | 내 포인트 내역 조회  | 인증           |
+| POST   | `/api/points/charge`         | 포인트 충전 (토스)   | CUSTOMER/SELLER|
+| GET    | `/api/points/seller/settlement`  | 매출 정산 요약   | SELLER         |
+| GET    | `/api/points/seller/transactions`| 거래 내역 조회   | SELLER         |
+| POST   | `/api/points/admin/adjust`   | 포인트 지급/회수     | ADMIN          |
+| GET    | `/api/points/admin/history`  | 전체 포인트 내역 조회| ADMIN          |
 
 ### Coupons
 
@@ -178,29 +183,32 @@ erDiagram
 | ------ | --------------------------- | ------------------- | ------------ |
 | GET    | `/api/coupons`              | 내 쿠폰 템플릿 조회 | SELLER/ADMIN |
 | POST   | `/api/coupons`              | 쿠폰 템플릿 생성    | SELLER/ADMIN |
-| PATCH  | `/api/coupons/:id`          | 쿠폰 수정           | SELLER/ADMIN |
+| PUT    | `/api/coupons/:id`          | 쿠폰 수정           | SELLER/ADMIN |
 | DELETE | `/api/coupons/:id`          | 쿠폰 삭제           | SELLER/ADMIN |
 | POST   | `/api/coupons/give`         | 쿠폰 발급           | SELLER/ADMIN |
 | GET    | `/api/coupons/user/:userId` | 유저 보유 쿠폰 조회 | ADMIN        |
 
 ### Reviews
 
-| Method | Endpoint           | 설명           | 권한           |
-| ------ | ------------------ | -------------- | -------------- |
-| GET    | `/api/reviews`     | 리뷰 목록 조회 | -              |
-| POST   | `/api/reviews`     | 리뷰 작성      | CUSTOMER       |
-| PATCH  | `/api/reviews/:id` | 리뷰 수정      | CUSTOMER       |
-| DELETE | `/api/reviews/:id` | 리뷰 삭제      | CUSTOMER/ADMIN |
+| Method | Endpoint                     | 설명               | 권한           |
+| ------ | ---------------------------- | ------------------ | -------------- |
+| GET    | `/api/reviews/center/:centerId` | 센터별 리뷰 조회 | -              |
+| GET    | `/api/reviews/class/:classId`   | 클래스별 리뷰 조회 | -              |
+| GET    | `/api/reviews/my/:reservationId`| 내 리뷰 조회       | 인증           |
+| POST   | `/api/reviews`                | 리뷰 작성          | CUSTOMER       |
+| PATCH  | `/api/reviews/:reviewId`       | 리뷰 수정          | CUSTOMER       |
+| DELETE | `/api/reviews/:reviewId`       | 리뷰 삭제          | CUSTOMER       |
 
 ### Notifications
 
 | Method | Endpoint                    | 설명              | 권한  |
 | ------ | --------------------------- | ----------------- | ----- |
-| GET    | `/api/notifications`        | 알림 목록 조회    | 인증  |
+| POST   | `/api/notifications`        | 알림 생성         | ADMIN |
 | GET    | `/api/notifications/stream` | SSE 실시간 스트림 | 인증  |
+| GET    | `/api/notifications`        | 내 알림 목록 조회 | 인증  |
+| GET    | `/api/notifications/:id`    | 알림 단건 조회    | 인증  |
 | PATCH  | `/api/notifications/:id`    | 읽음 처리         | 인증  |
 | DELETE | `/api/notifications/:id`    | 알림 삭제         | 인증  |
-| POST   | `/api/notifications`        | 알림 생성         | ADMIN |
 
 ### Users (Admin)
 

@@ -55,6 +55,12 @@ HTTP Status Code와 함께 다음 에러 객체를 반환합니다.
 }
 ```
 
+### 이미지 업로드 (Image Upload)
+클래스·리뷰·프로필 이미지가 필요한 API는 **multipart/form-data**로 요청합니다.  
+이미지 필드: 클래스 `images`(최대 3장), 리뷰 `images`(최대 3장), 프로필 `profileImage`(1장).  
+허용 형식: jpg, jpeg, png, webp (파일당 최대 5MB).  
+응답에 포함되는 이미지 URL은 서버 설정(로컬 또는 S3)에 따라 로컬 경로 또는 S3 공개 URL로 내려갑니다.
+
 ---
 
 ## 👤 회원 (User)
@@ -116,6 +122,16 @@ HTTP Status Code와 함께 다음 에러 객체를 반환합니다.
 - **URL**: `GET /centers/:id`
 - **Response**: `200 OK`
 
+### [공통] 주소 → 위경도 (지오코딩)
+카카오 주소 검색 API를 사용해 도로명주소를 위·경도로 변환합니다.
+- **URL**: `GET /centers/geocode`
+- **Query Params**: `address` (필수, 도로명주소)
+- **Response**: `200 OK` — `{ "success": true, "data": { "lat": number, "lng": number } }`
+- **Error Codes**:
+  - `MISSING_ADDRESS`: address 쿼리 없음
+  - `GEOCODE_UNAVAILABLE`: API 키 미설정
+  - `GEOCODE_NOT_FOUND`: 해당 주소 좌표 없음
+
 ### [판매자] 내 센터 조회
 - **URL**: `GET /centers/me`
 - **Header**: `Authorization` 필수 (SELLER)
@@ -148,6 +164,7 @@ HTTP Status Code와 함께 다음 에러 객체를 반환합니다.
 ### [판매자] 클래스 생성 / 수정 / 삭제
 - **URL**: `POST /classes`, `PATCH /classes/:id`, `DELETE /classes/:id`
 - **Header**: `Authorization` 필수 (SELLER, 삭제는 ADMIN도 가능)
+- **Body** (POST/PATCH): application/json 필드 + 이미지 시 **multipart/form-data**, 필드 `images` (최대 3장, 선택)
 - **Response**: `201 Created` / `200 OK`
 
 ### [관리자] 클래스 승인 / 반려
@@ -275,19 +292,16 @@ HTTP Status Code와 함께 다음 에러 객체를 반환합니다.
 ## ⭐ 리뷰 (Review)
 
 ### [고객] 리뷰 작성
-수강 완료(COMPLETED)된 클래스에 대해 리뷰를 작성합니다.
+수강 완료(COMPLETED)된 클래스에 대해 리뷰를 작성합니다. 이미지는 **multipart/form-data**의 `images`(최대 3장)로 보내거나, JSON body의 `imgUrls`로 URL 배열 전달 가능합니다.
 
 - **URL**: `POST /reviews`
 - **Header**: `Authorization` 필수
-- **Body**:
-  ```json
-  {
-    "reservationId": "uuid", // 필수
-    "rating": 5, // 1~5 정수
-    "content": "강사님이 친절해요",
-    "imgUrls": ["https://...", "https://..."] // 선택
-  }
-  ```
+- **Body** (application/json 또는 multipart/form-data):
+  - `reservationId`: uuid (필수)
+  - `rating`: 1~5 정수 (필수)
+  - `content`: 문자열 (선택)
+  - `imgUrls`: URL 배열 (선택, JSON 시)
+  - `images`: 이미지 파일 최대 3장 (선택, multipart 시)
 - **Response**: `201 Created`
 - **Error Codes**:
   - `DUPLICATE_REVIEW`: 이미 리뷰를 작성함
@@ -295,6 +309,11 @@ HTTP Status Code와 함께 다음 에러 객체를 반환합니다.
 
 ### [공통] 센터별 리뷰 조회
 - **URL**: `GET /reviews/center/:centerId`
+- **Query Params**: `page` (기본 1), `limit` (기본 20)
+- **Response**: `200 OK` — `data: { reviews, pagination: { totalCount, totalPage, currentPage, limit } }`
+
+### [공통] 클래스별 리뷰 조회
+- **URL**: `GET /reviews/class/:classId`
 - **Query Params**: `page` (기본 1), `limit` (기본 20)
 - **Response**: `200 OK` — `data: { reviews, pagination: { totalCount, totalPage, currentPage, limit } }`
 
@@ -306,7 +325,7 @@ HTTP Status Code와 함께 다음 에러 객체를 반환합니다.
 ### [고객] 리뷰 수정
 - **URL**: `PATCH /reviews/:reviewId`
 - **Header**: `Authorization` 필수
-- **Body**: `rating`, `content`, `imgUrls` 중 수정할 필드만 (모두 선택)
+- **Body**: `rating`, `content`, `imgUrls`(JSON) 또는 multipart로 `images`(최대 3장) 중 수정할 필드만 (모두 선택)
 - **Response**: `200 OK`
 
 ### [고객] 리뷰 삭제
@@ -453,6 +472,53 @@ PG사 결제 완료 후 호출하여 충전 처리합니다.
 - **URL**: `DELETE /coupons/:id`
 - **Header**: `Authorization` 필수 (SELLER 또는 ADMIN)
 - **Response**: `200 OK` — `{ "success": true, "message": "쿠폰이 삭제되었습니다." }`
+
+---
+
+## 🔔 알림 (Notification)
+
+모든 API는 `Authorization` 헤더 필수입니다.
+
+### [관리자] 알림 생성
+- **URL**: `POST /notifications`
+- **Header**: `Authorization` 필수 (ADMIN)
+- **Body**:
+  ```json
+  {
+    "userId": "user_cuid",
+    "title": "알림 제목",
+    "body": "알림 본문 (선택)",
+    "linkUrl": "/path 또는 https://..."
+  }
+  ```
+- **Response**: `201 Created`
+
+### [공통] 실시간 알림 스트림 (SSE)
+- **URL**: `GET /notifications/stream`
+- **Header**: `Authorization` 필수
+- **Response**: `200 OK` — `Content-Type: text/event-stream` (SSE 연결 유지)
+
+### [공통] 내 알림 목록 조회
+- **URL**: `GET /notifications`
+- **Header**: `Authorization` 필수
+- **Query Params**: `page` (기본 1), `limit` (기본 20), `userId` (선택, 관리자용)
+- **Response**: `200 OK` (미읽음 알림 30일 이내 등)
+
+### [공통] 알림 단건 조회
+- **URL**: `GET /notifications/:id`
+- **Header**: `Authorization` 필수
+- **Response**: `200 OK`
+
+### [공통] 알림 읽음 처리
+- **URL**: `PATCH /notifications/:id`
+- **Header**: `Authorization` 필수 (본인 또는 ADMIN)
+- **Body**: `{ "isRead": true }`
+- **Response**: `200 OK`
+
+### [공통] 알림 삭제
+- **URL**: `DELETE /notifications/:id`
+- **Header**: `Authorization` 필수 (본인 또는 ADMIN)
+- **Response**: `200 OK`
 
 ---
 
