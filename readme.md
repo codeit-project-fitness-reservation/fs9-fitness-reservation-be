@@ -63,6 +63,7 @@ prisma/
 
 ---
 
+
 ## DB 스키마
 
 ```mermaid
@@ -75,12 +76,12 @@ erDiagram
     User ||--o{ PointHistory : "has"
     User ||--o{ CouponTemplate : "issues"
 
-    Center ||--o{ Class : "has"
+    Center ||--o{ FitnessClass : "has"
     Center ||--o{ CouponTemplate : "has"
 
-    Class ||--o{ ClassSlot : "has"
-    Class ||--o{ Reservation : "has"
-    Class ||--o{ Review : "has"
+    FitnessClass ||--o{ ClassSlot : "has"
+    FitnessClass ||--o{ Reservation : "has"
+    FitnessClass ||--o{ Review : "has"
 
     ClassSlot ||--o{ Reservation : "has"
 
@@ -95,7 +96,7 @@ erDiagram
         string role "CUSTOMER|SELLER|ADMIN"
         int pointBalance
     }
-    Class {
+    FitnessClass {
         string id PK
         string status "PENDING|APPROVED|REJECTED"
         int pricePoints
@@ -110,6 +111,7 @@ erDiagram
         int couponDiscountPoints
     }
 ```
+
 
 ---
 
