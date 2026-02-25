@@ -3,7 +3,7 @@
 > FitMatch 피트니스 예약 플랫폼의 REST API 서버입니다.
 
 🌐 **서비스 URL**: https://fit-match.co.kr
-🔗 **Frontend Repository**: [fit-match-fe](링크)
+🔗 **Frontend Repository**: [fit-match-fe](https://github.com/jyoon00-cloud/fs9-fitness-reservation-fe)
 
 ## 목차
 
