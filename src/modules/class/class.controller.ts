@@ -2,34 +2,13 @@ import type { Request, Response, NextFunction } from "express";
 import { UserRole } from "@prisma/client";
 import * as classService from "./class.service.ts";
 import type { AuthRequest } from "../../middlewares/auth.ts";
-import { env } from "../../config/env.ts";
 import { AppError } from "../../middlewares/errorHandler.ts";
+import { getFileUrls as getUploadFileUrls } from "../../utils/upload/upload.config.ts";
 
-// multer 파일 타입 정의
-interface MulterFile {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  size: number;
-  destination: string;
-  filename: string;
-  path: string;
-}
-
-// 업로드된 파일을 URL로 변환
-// 첫 번째 이미지가 대표 이미지
 function getFileUrls(req: Request) {
-  const files = req.files as MulterFile[] | undefined;
-  const baseUrl = `${env.SERVER_URL}/uploads/classes`;
-  
-  if (!files || !Array.isArray(files)) {
-      return { bannerUrl: undefined, imgUrls: [] };
-  }
-
-  const imgUrls = files.map((file) => `${baseUrl}/${file.filename}`);
+  const files = req.files as Express.Multer.File[] | undefined;
+  const imgUrls = getUploadFileUrls(files, 'CLASS');
   const bannerUrl = imgUrls.length > 0 ? imgUrls[0] : undefined;
-
   return { bannerUrl, imgUrls };
 }
 

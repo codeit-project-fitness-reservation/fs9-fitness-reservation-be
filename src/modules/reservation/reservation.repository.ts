@@ -76,6 +76,8 @@ export async function findSellerReservationDetail(reservationId: string) {
           amount: true,
           balanceBefore: true,
           balanceAfter: true,
+          orderId: true,
+          paymentKey: true,
           memo: true,
           createdAt: true,
         },
