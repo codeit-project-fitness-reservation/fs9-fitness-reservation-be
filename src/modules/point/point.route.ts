@@ -3,6 +3,7 @@ import { authenticate, requireRole } from "../../middlewares/auth.ts";
 import { validate } from "../../middlewares/validate.ts";
 import {
   chargePointSchema,
+  chargeConfirmSchema,
   queryMyPointHistorySchema,
   adjustPointSchema,
   queryAdminPointHistorySchema,
@@ -13,6 +14,7 @@ import {
   getMyBalanceHandler,
   getMyPointHistoryHandler,
   chargePointHandler,
+  chargeConfirmHandler,
   adjustPointHandler,
   getAdminPointHistoryHandler,
   getSellerSettlementHandler,
@@ -32,7 +34,7 @@ router.get(
   getMyPointHistoryHandler
 );
 
-// 포인트 충전
+// 포인트 충전 (테스트/직접 호출용)
 router.post(
   "/charge",
   authenticate,
@@ -41,6 +43,14 @@ router.post(
   chargePointHandler
 );
 
+// 토스 승인 + 포인트 충전 
+router.post(
+  "/charge/confirm",
+  authenticate,
+  requireRole("CUSTOMER", "SELLER"),
+  validate(chargeConfirmSchema),
+  chargeConfirmHandler
+);
 
 // 매출 정산 요약 + 클래스별 매출
 router.get(

@@ -9,6 +9,15 @@ const chargePointBodySchema = z.object({
 export const chargePointSchema = z.object({ body: chargePointBodySchema });
 export type ChargePointInput = z.infer<typeof chargePointBodySchema>;
 
+// [고객] 토스 승인 + 포인트 충전 (한 번에 처리)
+const chargeConfirmBodySchema = z.object({
+  paymentKey: z.string().min(1, "결제 키가 필요합니다"),
+  orderId: z.string().min(1, "주문 ID가 필요합니다"),
+  amount: z.number().int().min(1, "충전 금액은 1 이상이어야 합니다"),
+});
+export const chargeConfirmSchema = z.object({ body: chargeConfirmBodySchema });
+export type ChargeConfirmInput = z.infer<typeof chargeConfirmBodySchema>;
+
 // [고객] 포인트 내역 조회
 const queryMyPointHistoryQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

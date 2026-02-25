@@ -3,6 +3,7 @@ import type { AuthRequest } from "../../middlewares/auth.ts";
 import * as pointService from "./point.service.ts";
 import type {
   ChargePointInput,
+  ChargeConfirmInput,
   QueryMyPointHistoryInput,
   QuerySellerSettlementInput,
   QuerySellerTransactionsInput,
@@ -61,6 +62,23 @@ export async function chargePointHandler(
   }
 }
 
+// [고객] 토스 승인 + 포인트 충전 
+export async function chargeConfirmHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const authReq = req as AuthRequest;
+    const data = await pointService.chargePointsWithConfirm(
+      authReq.user.id,
+      req.body as ChargeConfirmInput,
+    );
+    res.status(201).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+}
 
 // [판매자] 매출 정산 요약 + 클래스별 매출
 export async function getSellerSettlementHandler(

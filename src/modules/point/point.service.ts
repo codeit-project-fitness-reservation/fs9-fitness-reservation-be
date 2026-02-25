@@ -5,12 +5,14 @@ import { AppError } from "../../middlewares/errorHandler.ts";
 import * as pointRepository from "./point.repository.ts";
 import type {
   ChargePointInput,
+  ChargeConfirmInput,
   AdjustPointInput,
   QueryMyPointHistoryInput,
   QueryAdminPointHistoryInput,
   QuerySellerSettlementInput,
   QuerySellerTransactionsInput,
 } from "./point.validation.ts";
+import { env } from "../../config/env.ts";
 
 
 // 포인트 사용 (예약 생성 시 호출)
@@ -130,7 +132,47 @@ export async function chargePoints(userId: string, data: ChargePointInput) {
   };
 }
 
-/** year, month → 해당 월의 시작~끝 Date 반환 */
+// [고객] 토스페이먼츠 결제 승인 API 호출. 실패 시 AppError.
+async function confirmTossPayment(paymentKey: string, orderId: string, amount: number) {
+  const secretKey = env.TOSS_PAYMENTS_SECRET_KEY;
+  if (!secretKey) {
+    throw new AppError(
+      503,
+      "결제 서비스 설정이 되어 있지 않습니다. (TOSS_PAYMENTS_SECRET_KEY)",
+      "TOSS_NOT_CONFIGURED",
+    );
+  }
+  const authHeader = "Basic " + Buffer.from(secretKey + ":").toString("base64");
+
+  const res = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
+    method: "POST",
+    headers: {
+      Authorization: authHeader,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ paymentKey, orderId, amount }),
+  });
+
+  const data = (await res.json()) as { message?: string; code?: string };
+  if (!res.ok) {
+    throw new AppError(
+      res.status,
+      data.message || "결제 승인에 실패했습니다.",
+      data.code || "TOSS_CONFIRM_FAILED",
+    );
+  }
+}
+
+// [고객] 토스 승인 + 포인트 충전 
+export async function chargePointsWithConfirm(userId: string, data: ChargeConfirmInput) {
+  await confirmTossPayment(data.paymentKey, data.orderId, data.amount);
+  return chargePoints(userId, {
+    amount: data.amount,
+    paymentKey: data.paymentKey,
+    orderId: data.orderId,
+  });
+}
+
 function getMonthRange(year: number, month: number) {
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59, 999);

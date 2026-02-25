@@ -40,4 +40,7 @@ export const env = {
 
   // 카카오 로컬 API (주소→좌표, 선택)
   KAKAO_MAP_REST_API_KEY: process.env.KAKAO_MAP_REST_API_KEY || '',
+
+  // 토스페이먼츠 결제 시스템 설정
+  TOSS_PAYMENTS_SECRET_KEY: process.env.TOSS_PAYMENTS_SECRET_KEY || '',
 };

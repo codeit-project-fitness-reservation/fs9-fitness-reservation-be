@@ -10,6 +10,9 @@ router.post("/", authenticate, couponController.createCoupon);
 // 쿠폰 지급
 router.post("/give", authenticate, couponController.giveCoupon);
 
+// [고객] 내 쿠폰함 조회
+router.get("/me", authenticate, couponController.getMyUserCoupons);
+
 // 특정 유저의 쿠폰함 조회
 router.get("/user/:userId", authenticate, couponController.getUserCoupons);
 

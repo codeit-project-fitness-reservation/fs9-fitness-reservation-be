@@ -45,10 +45,11 @@ export async function createReservation(
   }
   let couponDiscount = 0;
   let userCoupon = null;
+  const userCouponIdToUse = data.userCouponId ?? data.couponId;
 
-  if (data.userCouponId) {
+  if (userCouponIdToUse) {
     userCoupon = await reservationRepository.findUserCouponById(
-      data.userCouponId,
+      userCouponIdToUse,
     );
 
     if (!userCoupon) {

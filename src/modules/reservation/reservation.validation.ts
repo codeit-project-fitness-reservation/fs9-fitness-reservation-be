@@ -2,10 +2,11 @@ import { z } from "zod";
 
 const reservationStatusEnum = z.enum(["BOOKED", "CANCELED", "COMPLETED"]);
 
-// 예약 생성
+// 예약 생성 (userCouponId: 내 쿠폰함 UserCoupon id. couponId는 FE 호환용 별칭)
 const createReservationBodySchema = z.object({
   slotId: z.cuid(),
   userCouponId: z.cuid().optional(),
+  couponId: z.cuid().optional(),
 });
 export const createReservationSchema = z.object({
   body: createReservationBodySchema,
