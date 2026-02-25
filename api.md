@@ -338,7 +338,7 @@ HTTP Status Code와 함께 다음 에러 객체를 반환합니다.
 ## 💰 포인트 (Point)
 
 ### [고객] 포인트 충전
-PG사 결제 완료 후 호출하여 충전 처리합니다.
+PG사 결제 완료 후 호출하여 충전 처리합니다. (토스 승인 없이 포인트만 적립할 때 사용.)
 
 - **URL**: `POST /points/charge`
 - **Header**: `Authorization` 필수
@@ -357,6 +357,34 @@ PG사 결제 완료 후 호출하여 충전 처리합니다.
     "data": { "pointHistory": { ... }, "balanceAfter": 15000 }
   }
   ```
+- **에러**: 동일 `paymentKey`로 이미 처리된 경우 `409 DUPLICATE_PAYMENT`
+
+### [고객] 포인트 충전 (토스 결제 승인 + 충전)
+토스 결제 완료 리다이렉트 후, **결제 승인 API 호출과 포인트 충전을 한 번에** 처리합니다. 일반 포인트 충전 플로우에서는 이 API를 사용합니다.
+
+- **URL**: `POST /points/charge/confirm`
+- **Header**: `Authorization` 필수
+- **Body**:
+  ```json
+  {
+    "paymentKey": "토스_결제승인_키",
+    "orderId": "주문_ID",
+    "amount": 10000
+  }
+  ```
+- **Response**: `200 OK`
+  ```json
+  {
+    "success": true,
+    "data": { "pointHistory": { ... }, "balanceAfter": 15000 }
+  }
+  ```
+- **에러**:
+  - `503 TOSS_NOT_CONFIGURED`: `TOSS_PAYMENTS_SECRET_KEY` 미설정
+  - 토스 승인 실패 시 토스 응답 코드/메시지 그대로 반환
+  - 동일 결제 재요청 시 `409 DUPLICATE_PAYMENT`
+
+**참고**: 토스 연동 상세·환경변수는 프로젝트 루트 `docs/TOSS_PAYMENTS.md` 참고.
 
 ### [고객] 내 포인트 잔액 조회
 - **URL**: `GET /points/me`
