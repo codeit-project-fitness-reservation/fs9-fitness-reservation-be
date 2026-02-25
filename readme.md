@@ -92,25 +92,145 @@ erDiagram
     User {
         string id PK
         string email
+        string password
         string nickname
-        string role "CUSTOMER|SELLER|ADMIN"
+        string phone
+        UserRole role "CUSTOMER|SELLER|ADMIN"
+        string profileImgUrl
+        string introduction
+        string note
         int pointBalance
+        DateTime createdAt
+        DateTime updatedAt
     }
+
+    Center {
+        string id PK
+        string ownerId FK
+        string name
+        string phone
+        string address1
+        string address2
+        string introduction
+        json businessHours
+        float lat
+        float lng
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
     FitnessClass {
         string id PK
-        string status "PENDING|APPROVED|REJECTED"
+        string centerId FK
+        string title
+        string category
+        string level
+        string description
+        string notice
         int pricePoints
         int capacity
+        string bannerUrl
+        string imgUrls
+        ClassStatus status "PENDING|APPROVED|REJECTED"
+        string rejectReason
         json schedule
+        DateTime createdAt
+        DateTime updatedAt
+        DateTime deletedAt
     }
+
+    ClassSlot {
+        string id PK
+        string classId FK
+        DateTime startAt
+        DateTime endAt
+        int capacity
+        int currentReservation
+        boolean isOpen
+        DateTime createdAt
+        DateTime deletedAt
+    }
+
     Reservation {
         string id PK
-        string status "BOOKED|CANCELED|COMPLETED"
+        string userId FK
+        string classId FK
+        string slotId FK
+        string userCouponId FK
+        ReservationStatus status "BOOKED|CANCELED|COMPLETED"
+        DateTime slotStartAt
         int pricePoints
-        int paidPoints
         int couponDiscountPoints
+        int paidPoints
+        DateTime canceledAt
+        UserRole canceledBy
+        string cancelNote
+        string adminMemo
+        DateTime completedAt
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    PointHistory {
+        string id PK
+        string userId FK
+        string reservationId FK
+        PointUsed type "CHARGE|USE|REFUND|ADMIN"
+        int amount
+        int balanceBefore
+        int balanceAfter
+        string orderId
+        string paymentKey
+        string memo
+        DateTime createdAt
+    }
+
+    CouponTemplate {
+        string id PK
+        string issuerId FK
+        string centerId FK
+        string name
+        int discountPoints
+        int discountPercentage
+        DateTime expiresAt
+        DateTime createdAt
+    }
+
+    UserCoupon {
+        string id PK
+        string userId FK
+        string templateId FK
+        string couponName
+        int discountPoints
+        int discountPercentage
+        DateTime expiresAt
+        DateTime issuedAt
+        DateTime usedAt
+    }
+
+    Review {
+        string id PK
+        string reservationId FK
+        string userId FK
+        string classId FK
+        int rating
+        string content
+        string imgUrls
+        DateTime createdAt
+    }
+
+    Notification {
+        string id PK
+        string userId FK
+        string title
+        string body
+        string linkUrl
+        boolean isRead
+        DateTime createdAt
+        DateTime updatedAt
     }
 ```
+
 
 
 ---
