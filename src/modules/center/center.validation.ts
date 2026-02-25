@@ -9,6 +9,8 @@ export const createCenterSchema = z.object({
       .max(100, "센터명은 100자 이내로 입력해주세요"),
     address1: z.string().min(1, "도로명 주소는 필수입니다"),
     address2: z.string().optional(),
+    lat: z.number().min(-90).max(90).optional(),
+    lng: z.number().min(-180).max(180).optional(),
   }),
 });
 

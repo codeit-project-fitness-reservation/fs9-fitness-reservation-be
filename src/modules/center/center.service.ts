@@ -26,6 +26,8 @@ export async function createCenter(userId: string, data: CreateCenterInput) {
     name: data.name,
     address1: data.address1,
     address2: data.address2 ?? null,
+    lat: data.lat ?? null,
+    lng: data.lng ?? null,
   });
 
   return newCenter;

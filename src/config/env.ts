@@ -37,4 +37,7 @@ export const env = {
   AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || '',
 
   SERVER_URL: process.env.SERVER_URL || `http://localhost:${process.env.PORT || '3000'}`,
+
+  // 카카오 로컬 API (주소→좌표, 선택)
+  KAKAO_MAP_REST_API_KEY: process.env.KAKAO_MAP_REST_API_KEY || '',
 };
