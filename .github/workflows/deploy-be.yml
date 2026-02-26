@@ -69,6 +69,7 @@ jobs:
             find . -mindepth 1 -maxdepth 1 ! -name 'deploy.tar.gz' -exec rm -rf {} +
             tar xzf deploy.tar.gz -C .
             pnpm install --frozen-lockfile --prod --ignore-scripts
+            pnpm add -g dotenv-cli
             pnpm prisma:generate
-            pnpm prisma migrate deploy
+            dotenv -e .env -- pnpm prisma migrate deploy
             pm2 reload fitmatch-be --update-env || pm2 start pnpm --name fitmatch-be -- start
