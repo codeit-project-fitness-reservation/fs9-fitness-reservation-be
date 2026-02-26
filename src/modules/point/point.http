@@ -1,0 +1,155 @@
+### 변수 설정
+@baseUrl = http://localhost:{{$dotenv PORT}}/api
+@customerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3QtY3VzdG9tZXItaWQtMDEiLCJlbWFpbCI6ImN1c3RvbWVyQHRlc3QuY29tIiwicm9sZSI6IkNVU1RPTUVSIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjIwNTEwNDk2MDB9.-ZzfFPp3z0E4l8iUPKJpgcqOHss0ZrEBCDTe-o_Sq5w
+@sellerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3Qtc2VsbGVyLWlkLTAxIiwiZW1haWwiOiJzZWxsZXJAdGVzdC5jb20iLCJyb2xlIjoiU0VMTEVSIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjIwNTEwNDk2MDB9.b72ElQl5zvPQjAf-hhgvQNtv422HtcPjvT5qQ3EPeM0
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3QtYWRtaW4taWQtMDEiLCJlbWFpbCI6ImFkbWluQHRlc3QuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjIwNTEwNDk2MDB9.sD-JpVjXOUG4buIUZHoT5s8Xc6bx748qVnx0eXyTcEg
+
+# 시드 데이터의 고정 ID (customer)
+@userId = test-customer-id-01
+
+# 클래스/슬롯/예약 생성 시 자동으로 채워짐
+@classId = {{createClass.response.body.data.id}}
+@slotId = {{createSlot.response.body.data.id}}
+@reservationId = {{createReservation.response.body.data.id}}
+
+### 0. [공통] 내 정보 조회 (ID 확인용)
+# @name profile
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{customerToken}}
+
+### 1. [고객] 포인트 조회
+GET {{baseUrl}}/points/me
+Authorization: Bearer {{customerToken}}
+
+### 2. [고객] 포인트 충전 (10,000P)
+POST {{baseUrl}}/points/charge
+Content-Type: application/json
+Authorization: Bearer {{customerToken}}
+
+{
+  "amount": 10000,
+  "paymentKey": "test_payment_key_{{$datetime iso8601}}",
+  "orderId": "test_order_id_{{$datetime iso8601}}"
+}
+
+### 3. [고객] 포인트 내역 조회
+GET {{baseUrl}}/points/me/history?page=1&limit=10
+Authorization: Bearer {{customerToken}}
+
+### 4. [고객] 포인트 내역 조회 (충전만)
+GET {{baseUrl}}/points/me/history?type=CHARGE
+Authorization: Bearer {{customerToken}}
+
+### 5. [관리자] 포인트 지급 
+
+POST {{baseUrl}}/points/admin/adjust
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "userId": "{{userId}}",
+  "amount": 5000,
+  "memo": "이벤트 참여 보상"
+}
+
+### 6. [관리자] 포인트 차감 
+POST {{baseUrl}}/points/admin/adjust
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "userId": "{{userId}}",
+  "amount": -1000,
+  "memo": "관리자 차감 테스트"
+}
+
+### 7. [관리자] 전체 포인트 내역 조회
+GET {{baseUrl}}/points/admin/history?page=1&limit=20
+Authorization: Bearer {{adminToken}}
+
+### 8. [판매자] 매출 정산 요약 (2026년 2월)
+GET {{baseUrl}}/points/seller/settlement?year=2026&month=2
+Authorization: Bearer {{sellerToken}}
+
+### 9. [판매자] 거래 내역 조회
+GET {{baseUrl}}/points/seller/transactions?year=2026&month=2&page=1&limit=20
+Authorization: Bearer {{sellerToken}}
+
+### 10. [준비] 클래스 생성 (환불 테스트용)
+# @name createClass
+POST {{baseUrl}}/classes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+Authorization: Bearer {{sellerToken}}
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="title"
+
+포인트테스트용클래스
+------WebKitFormBoundary
+Content-Disposition: form-data; name="category"
+
+필라테스
+------WebKitFormBoundary
+Content-Disposition: form-data; name="level"
+
+초급
+------WebKitFormBoundary
+Content-Disposition: form-data; name="description"
+
+포인트 환불 테스트를 위한 클래스입니다
+------WebKitFormBoundary
+Content-Disposition: form-data; name="pricePoints"
+
+3000
+------WebKitFormBoundary
+Content-Disposition: form-data; name="capacity"
+
+5
+------WebKitFormBoundary--
+
+### 10-1. [준비] 클래스 승인
+PATCH {{baseUrl}}/classes/{{classId}}/approve
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### 10-2. [준비] 슬롯 생성
+# @name createSlot
+POST {{baseUrl}}/classes/{{classId}}/slots
+Content-Type: application/json
+Authorization: Bearer {{sellerToken}}
+
+{
+  "date": "2026-03-30",
+  "hour": 17,
+  "capacity": 5,
+  "isOpen": true
+}
+
+### 10-3. [고객] 예약 생성 (환불 테스트용)
+# @name createReservation
+
+POST {{baseUrl}}/reservations
+Content-Type: application/json
+Authorization: Bearer {{customerToken}}
+
+{
+  "slotId": "{{slotId}}"
+}
+
+### 11. [고객] 예약 취소 (환불 발생)
+# 위 요청에서 생성된 reservationId 필요
+PATCH {{baseUrl}}/reservations/{{reservationId}}/cancel
+Content-Type: application/json
+Authorization: Bearer {{customerToken}}
+
+{
+  "cancelNote": "단순 변심"
+}
+
+### 12. [판매자] 클래스 삭제 (환불 발생)
+DELETE {{baseUrl}}/classes/{{classId}}
+Authorization: Bearer {{sellerToken}}
+
+### 13. [고객] 포인트 내역 조회 (환불만)
+GET {{baseUrl}}/points/me/history?type=REFUND
+Authorization: Bearer {{customerToken}}

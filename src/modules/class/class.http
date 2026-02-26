@@ -1,0 +1,147 @@
+### 변수 설정
+@baseUrl = http://localhost:{{$dotenv PORT}}/api
+
+@customerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3QtY3VzdG9tZXItaWQtMDEiLCJlbWFpbCI6ImN1c3RvbWVyQHRlc3QuY29tIiwicm9sZSI6IkNVU1RPTUVSIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjIwNTEwNDk2MDB9.-ZzfFPp3z0E4l8iUPKJpgcqOHss0ZrEBCDTe-o_Sq5w
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3QtYWRtaW4taWQtMDEiLCJlbWFpbCI6ImFkbWluQHRlc3QuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjIwNTEwNDk2MDB9.sD-JpVjXOUG4buIUZHoT5s8Xc6bx748qVnx0eXyTcEg
+@sellerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3Qtc2VsbGVyLWlkLTAxIiwiZW1haWwiOiJzZWxsZXJAdGVzdC5jb20iLCJyb2xlIjoiU0VMTEVSIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjIwNTEwNDk2MDB9.b72ElQl5zvPQjAf-hhgvQNtv422HtcPjvT5qQ3EPeM0
+@sellerToken2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3Qtc2VsbGVyLWlkLTAyIiwiZW1haWwiOiJzZWxsZXIyQHRlc3QuY29tIiwicm9sZSI6IlNFTExFUiIsImlhdCI6MTczNTY4OTYwMCwiZXhwIjoyMDUxMDQ5NjAwfQ.kzXCbd9oz4ffjwwYX312XC-xdsd4WlUqla4fnOB7jUI
+
+@classId = {{createClass.response.body.data.id}}
+@slotId = {{createSlot.response.body.data.id}}
+
+### 1. 클래스 생성 (판매자)
+# @name createClass
+POST {{baseUrl}}/classes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+Authorization: Bearer {{sellerToken}}
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="title"
+
+테스트요가클래스
+------WebKitFormBoundary
+Content-Disposition: form-data; name="category"
+
+요가
+------WebKitFormBoundary
+Content-Disposition: form-data; name="level"
+
+초급
+------WebKitFormBoundary
+Content-Disposition: form-data; name="description"
+
+요가 초급 클래스입니다
+------WebKitFormBoundary
+Content-Disposition: form-data; name="notice"
+
+수업 10분 전 도착 부탁드립니다
+------WebKitFormBoundary
+Content-Disposition: form-data; name="pricePoints"
+
+10000
+------WebKitFormBoundary
+Content-Disposition: form-data; name="capacity"
+
+20
+------WebKitFormBoundary--
+
+
+### 1-1. 클래스 통계 조회 (관리자)
+GET {{baseUrl}}/classes/stats
+Authorization: Bearer {{adminToken}}
+
+### 2. 클래스 목록 조회
+GET {{baseUrl}}/classes
+
+### 3. 클래스 목록 조회 (필터링)
+GET {{baseUrl}}/classes?category=요가&level=초급&page=1&limit=10
+
+### 3-1. 클래스 목록 조회 (검색)
+GET {{baseUrl}}/classes?search=요가
+
+
+### 4. 클래스 수정 (판매자)
+PATCH {{baseUrl}}/classes/{{classId}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+Authorization: Bearer {{sellerToken}}
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="title"
+
+수정된 요가 클래스
+------WebKitFormBoundary
+Content-Disposition: form-data; name="description"
+
+설명이 수정되었습니다
+------WebKitFormBoundary--
+
+### 5. 클래스 승인 (관리자)
+PATCH {{baseUrl}}/classes/{{classId}}/approve
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+
+### 6. 클래스 반려 (관리자)
+PATCH {{baseUrl}}/classes/{{classId}}/reject
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "rejectReason": "클래스 정보가 부족합니다"
+}
+
+### 7. 클래스 상세 조회
+GET {{baseUrl}}/classes/{{classId}}
+
+### 8. 슬롯 생성 (판매자)
+# @name createSlot
+POST {{baseUrl}}/classes/{{classId}}/slots
+Content-Type: application/json
+Authorization: Bearer {{sellerToken}}
+
+{
+  "date": "2026-03-26",
+  "hour": 8,
+  "capacity": 15,
+  "isOpen": true
+}
+
+### 9. 슬롯 수정 (판매자)
+PATCH {{baseUrl}}/classes/{{classId}}/slots/{{slotId}}
+Content-Type: application/json
+Authorization: Bearer {{sellerToken}}
+
+{
+  "isOpen": false
+}
+
+### 10. 슬롯 삭제 (판매자)
+DELETE {{baseUrl}}/classes/{{classId}}/slots/{{slotId}}
+Authorization: Bearer {{sellerToken}}
+
+### 11. 클래스 삭제 (본인 - 판매자)
+DELETE {{baseUrl}}/classes/{{classId}}
+Authorization: Bearer {{sellerToken}}
+
+### 12. 클래스 삭제 (관리자)
+# 관리자는 모든 클래스 삭제 가능해야 함
+DELETE {{baseUrl}}/classes/{{classId}}
+Authorization: Bearer {{adminToken}}
+
+### 13. 클래스 삭제 - 권한 없음 (다른 판매자)
+# 다른 판매자가 생성한 클래스 삭제 시도 (403 Forbidden 예상)
+DELETE {{baseUrl}}/classes/{{classId}}
+Authorization: Bearer {{sellerToken2}}
+
+### 14. 슬롯 생성 - 권한 없음 (다른 판매자)
+POST {{baseUrl}}/classes/{{classId}}/slots
+Content-Type: application/json
+Authorization: Bearer {{sellerToken2}}
+
+{
+  "date": "2026-03-01",
+  "hour": 10,
+  "capacity": 10,
+  "isOpen": true
+}
+

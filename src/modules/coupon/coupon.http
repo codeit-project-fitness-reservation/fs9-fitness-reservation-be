@@ -1,0 +1,120 @@
+@baseUrl = http://localhost:{{$dotenv PORT}}/api
+
+### ========== 로그인 (시드: admin@test.com, customer1@test.com, seller1@test.com / test1234) ==========
+
+### 0-1. ADMIN 로그인
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "test1234"
+}
+
+###
+@adminToken = {{adminLogin.response.body.data.accessToken}}
+
+### 0-2. CUSTOMER 로그인
+# @name customerLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer1@test.com",
+  "password": "test1234"
+}
+
+###
+@customerId = {{customerLogin.response.body.data.user.id}}
+@customerToken = {{customerLogin.response.body.data.accessToken}}
+
+### 0-3. SELLER 로그인
+# @name sellerLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "seller1@test.com",
+  "password": "test1234"
+}
+
+###
+@sellerToken = {{sellerLogin.response.body.data.accessToken}}
+
+### ========== 쿠폰 템플릿 ==========
+
+### 1. [관리자] 쿠폰 템플릿 생성 (정액 할인)
+# @name createAmountCoupon
+POST {{baseUrl}}/coupons
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "신규 가입 환영 5000P 쿠폰",
+  "discountType": "AMOUNT",
+  "usageValue": 5000,
+  "expiresAt": "2026-12-31T23:59:59Z"
+}
+
+### 2. [관리자] 쿠폰 템플릿 생성 (정률 할인)
+# @name createPercentCoupon
+POST {{baseUrl}}/coupons
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "여름 맞이 20% 할인 쿠폰",
+  "discountType": "PERCENTAGE",
+  "usageValue": 20,
+  "expiresAt": "2026-08-31T23:59:59Z"
+}
+
+### 3. [관리자] 내가 만든 쿠폰 템플릿 목록 조회
+GET {{baseUrl}}/coupons
+Authorization: Bearer {{adminToken}}
+
+### 4. [관리자] 쿠폰 템플릿 수정
+@templateId = {{createAmountCoupon.response.body.data.id}}
+
+PUT {{baseUrl}}/coupons/{{templateId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "신규 가입 환영 3000P 쿠폰 (가격 수정)",
+  "usageValue": 3000
+}
+
+### ========== 쿠폰 지급 & 쿠폰함 ==========
+
+### 5. [관리자] 유저에게 쿠폰 지급 (고객에게 위 템플릿 지급)
+POST {{baseUrl}}/coupons/give
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "userId": "{{customerId}}",
+  "templateId": "{{templateId}}"
+}
+
+### 6. [고객] 내 쿠폰함 조회
+GET {{baseUrl}}/coupons/user/{{customerId}}
+Authorization: Bearer {{customerToken}}
+
+### 7. [관리자] 특정 유저(고객) 쿠폰함 조회 (권한 테스트)
+GET {{baseUrl}}/coupons/user/{{customerId}}
+Authorization: Bearer {{adminToken}}
+
+### ========== 쿠폰 삭제 (핵심 검증) ==========
+
+### 8. [관리자] 쿠폰 템플릿 삭제
+# 템플릿이 삭제되어도 유저는 쿠폰 사용 가능해야 함
+DELETE {{baseUrl}}/coupons/{{templateId}}
+Authorization: Bearer {{adminToken}}
+
+### 9. [고객] 템플릿 삭제 후 내 쿠폰함 조회 (스냅샷 확인)
+# 삭제된 템플릿(templateId가 null 또는 존재하지 않음)이어도 
+# couponName, discountPoints 등 스냅샷 정보가 정상 반환되어야 함
+GET {{baseUrl}}/coupons/user/{{customerId}}
+Authorization: Bearer {{customerToken}}

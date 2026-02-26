@@ -1,0 +1,81 @@
+@baseUrl = http://localhost:{{$dotenv PORT}}/api
+@email_customer = test@example.com
+@email_seller = seller@example.com
+@password = password123
+@nickname = 테스터
+@phone = 01012345678
+
+### 회원가입 (CUSTOMER)
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "{{email_customer}}",
+  "password": "{{password}}",
+  "nickname": "{{nickname}}",
+  "phone": "{{phone}}",
+  "role": "CUSTOMER"
+}
+
+### 회원가입 (SELLER)
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "{{email_seller}}",
+  "password": "{{password}}",
+  "nickname": "판매자",
+  "phone": "01099998888",
+  "role": "SELLER",
+  "center": {
+    "name": "피트니스센터A",
+    "address1": "서울특별시 강남구 테헤란로 123",
+    "address2": "4층"
+  }
+}
+
+
+
+### 로그인 (CUSTOMER)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email_customer}}",
+  "password": "{{password}}"
+}
+
+### 로그인 (SELLER)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email_seller}}",
+  "password": "{{password}}"
+}
+
+### 토큰 저장 (로그인 요청 후 실행)
+@accessToken = {{login.response.body.data.accessToken}}
+
+### 내 정보 조회
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+### 내 정보 수정
+PUT {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nickname": "수정된닉네임",
+  "phone": "01087654321"
+}
+
+### 로그아웃
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+
+### 헬스체크
+GET http://localhost:3000/health

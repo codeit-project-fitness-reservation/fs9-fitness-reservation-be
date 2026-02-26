@@ -1,0 +1,152 @@
+### 변수 설정
+@baseUrl = http://localhost:{{$dotenv PORT}}/api
+@customerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3QtY3VzdG9tZXItaWQtMDEiLCJlbWFpbCI6ImN1c3RvbWVyQHRlc3QuY29tIiwicm9sZSI6IkNVU1RPTUVSIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjIwNTEwNDk2MDB9.-ZzfFPp3z0E4l8iUPKJpgcqOHss0ZrEBCDTe-o_Sq5w
+@sellerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3Qtc2VsbGVyLWlkLTAxIiwiZW1haWwiOiJzZWxsZXJAdGVzdC5jb20iLCJyb2xlIjoiU0VMTEVSIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjIwNTEwNDk2MDB9.b72ElQl5zvPQjAf-hhgvQNtv422HtcPjvT5qQ3EPeM0
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3QtYWRtaW4taWQtMDEiLCJlbWFpbCI6ImFkbWluQHRlc3QuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjIwNTEwNDk2MDB9.sD-JpVjXOUG4buIUZHoT5s8Xc6bx748qVnx0eXyTcEg
+
+
+# 클래스/슬롯 생성 시 자동으로 채워짐
+@classId = {{createClass.response.body.data.id}}
+@slotId = {{createSlot.response.body.data.id}}
+@reservationId = {{createReservation.response.body.data.id}}
+
+# ========== 0. 테스트 데이터 준비 (클래스 & 슬롯 생성) ==========
+
+### 0-1. 클래스 생성 (판매자)
+# @name createClass
+POST {{baseUrl}}/classes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+Authorization: Bearer {{sellerToken}}
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="title"
+
+예약테스트용클래스
+------WebKitFormBoundary
+Content-Disposition: form-data; name="category"
+
+헬스
+------WebKitFormBoundary
+Content-Disposition: form-data; name="level"
+
+중급
+------WebKitFormBoundary
+Content-Disposition: form-data; name="description"
+
+예약 테스트를 위한 클래스입니다
+------WebKitFormBoundary
+Content-Disposition: form-data; name="pricePoints"
+
+5000
+------WebKitFormBoundary
+Content-Disposition: form-data; name="capacity"
+
+10
+------WebKitFormBoundary--
+
+### 0-2. 클래스 승인 (관리자)
+PATCH {{baseUrl}}/classes/{{classId}}/approve
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### 0-3. 슬롯 생성 (판매자)
+# @name createSlot
+POST {{baseUrl}}/classes/{{classId}}/slots
+Content-Type: application/json
+Authorization: Bearer {{sellerToken}}
+
+{
+  "date": "2026-03-28",
+  "hour": 15,
+  "capacity": 10,
+  "isOpen": true
+}
+
+# ========== 예약 테스트 시작 ==========
+
+### 1. [고객] 예약 생성
+# @name createReservation
+POST {{baseUrl}}/reservations
+Content-Type: application/json
+Authorization: Bearer {{customerToken}}
+
+{
+  "slotId": "{{slotId}}"
+}
+
+### 2. [고객] 내 예약 목록 조회 (전체)
+GET {{baseUrl}}/reservations
+Authorization: Bearer {{customerToken}}
+
+### 3. [고객] 내 예약 목록 조회 (BOOKED만)
+GET {{baseUrl}}/reservations?status=BOOKED
+Authorization: Bearer {{customerToken}}
+
+### 4. [고객] 예약 상세 조회
+GET {{baseUrl}}/reservations/{{reservationId}}
+Authorization: Bearer {{customerToken}}
+
+### 5. [고객] 예약 취소
+PATCH {{baseUrl}}/reservations/{{reservationId}}/cancel
+Content-Type: application/json
+Authorization: Bearer {{customerToken}}
+
+{
+  "cancelNote": "개인 사정으로 취소합니다"
+}
+
+
+### 6. [판매자] 주간 슬롯 조회
+GET {{baseUrl}}/reservations/seller/slots?startDate=2026-02-01&endDate=2026-02-28
+Authorization: Bearer {{sellerToken}}
+
+### 7. [판매자] 내 센터 예약 조회
+GET {{baseUrl}}/reservations/seller/reservations
+Authorization: Bearer {{sellerToken}}
+
+### 8. [판매자] 유저 예약 강제 취소
+PATCH {{baseUrl}}/reservations/seller/reservations/{{reservationId}}/cancel
+Content-Type: application/json
+Authorization: Bearer {{sellerToken}}
+
+{
+  "cancelNote": "강사 사정으로 인한 휴강"
+}
+
+### 9. [판매자] 예약 완료 처리
+PATCH {{baseUrl}}/reservations/{{reservationId}}/complete
+Authorization: Bearer {{sellerToken}}
+
+### 10. [관리자] 전체 예약 조회
+GET {{baseUrl}}/reservations/admin/reservations
+Authorization: Bearer {{adminToken}}
+
+### 11. [관리자] 예약 통계
+GET {{baseUrl}}/reservations/admin/reservations/stats?startDate=2026-01-01&endDate=2026-12-31
+Authorization: Bearer {{adminToken}}
+
+### 12. [관리자] 예약 강제 취소
+DELETE {{baseUrl}}/reservations/admin/reservations/{{reservationId}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "cancelNote": "운영 정책 위반"
+}
+
+### 13. [고객] 예약 생성 - 포인트 부족 (보유 0원)
+# seed에서 생성된 빈털털이 고객 (poor@test.com)
+@poorCustomerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3QtcG9vci1jdXN0b21lci1pZC0wMSIsImVtYWlsIjoicG9vckB0ZXN0LmNvbSIsInJvbGUiOiJDVVNUT01FUiIsImlhdCI6MTczNTY4OTYwMCwiZXhwIjoyMDUxMDQ5NjAwfQ.7FYriw6LgX4kgWh2Q6nyKreWyL_yB5u1bC1OQTBQjEA
+POST {{baseUrl}}/reservations
+Content-Type: application/json
+Authorization: Bearer {{poorCustomerToken}}
+
+{
+  "slotId": "{{slotId}}"
+}
+
+### 14. [고객] 예약 상세 조회 - 권한 없음
+# 다른 사용자의 예약 조회 시도 (403 Forbidden 예상)
+GET {{baseUrl}}/reservations/{{reservationId}}
+Authorization: Bearer {{sellerToken}}
+
