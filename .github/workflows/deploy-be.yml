@@ -27,6 +27,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Create env file
+        run: |
+          cat > .env << 'BE_ENV_END'
+          ${{ secrets.BE_ENV }}
+          BE_ENV_END
+
       - name: Prisma generate
         run: pnpm prisma:generate
 
@@ -36,7 +42,7 @@ jobs:
       - name: Prepare deploy bundle
         run: |
           mkdir -p deploy-app
-          cp package.json pnpm-lock.yaml deploy-app/
+          cp package.json pnpm-lock.yaml .env prisma.config.ts deploy-app/
           cp -r src prisma deploy-app/
           cd deploy-app && tar czf ../deploy.tar.gz .
 
@@ -62,10 +68,8 @@ jobs:
             cd ~/fs9-fitness-reservation-be
             find . -mindepth 1 -maxdepth 1 ! -name 'deploy.tar.gz' -exec rm -rf {} +
             tar xzf deploy.tar.gz -C .
-            cat > .env << 'BE_ENV_END'
-            ${{ secrets.BE_ENV }}
-            BE_ENV_END
-            pnpm install --frozen-lockfile --prod
+            pnpm install --frozen-lockfile --prod --ignore-scripts
+            pnpm add -g dotenv-cli
             pnpm prisma:generate
-            pnpm prisma migrate deploy
+            dotenv -e .env -- pnpm prisma migrate deploy
             pm2 reload fitmatch-be --update-env || pm2 start pnpm --name fitmatch-be -- start
