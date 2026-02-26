@@ -71,7 +71,7 @@ jobs:
             cat > .env << 'BE_ENV_END'
             ${{ secrets.BE_ENV }}
             BE_ENV_END
-            pnpm install --frozen-lockfile --prod
+            pnpm install --frozen-lockfile --prod --ignore-scripts
             pnpm prisma:generate
             pnpm prisma migrate deploy
             pm2 reload fitmatch-be --update-env || pm2 start pnpm --name fitmatch-be -- start
