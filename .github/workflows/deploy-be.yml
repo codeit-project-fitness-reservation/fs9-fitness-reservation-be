@@ -73,6 +73,5 @@ jobs:
             BE_ENV_END
             pnpm install --frozen-lockfile --prod --ignore-scripts
             pnpm prisma:generate
-            export $(grep -v '^#' .env | xargs)
-            pnpm prisma migrate deploy
+            npx dotenv-cli -e .env -- pnpm prisma migrate deploy
             pm2 reload fitmatch-be --update-env || pm2 start pnpm --name fitmatch-be -- start
