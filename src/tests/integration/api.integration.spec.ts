@@ -74,12 +74,35 @@ jest.unstable_mockModule("../../modules/review/review.service.ts", () => ({
   deleteReview: jest.fn(),
 }));
 
+const mockCreateNotification = jest.fn();
+const mockListNotifications = jest.fn();
+jest.unstable_mockModule("../../modules/notification/notification.service.ts", () => ({
+  createNotification: mockCreateNotification,
+  listNotifications: mockListNotifications,
+  getNotificationById: jest.fn(),
+  markNotificationRead: jest.fn(),
+  deleteNotificationById: jest.fn(),
+}));
+
+jest.unstable_mockModule("../../modules/notification/notification.sse.ts", () => ({
+  addClient: jest.fn(),
+  publishConnected: jest.fn(),
+  publishPing: jest.fn(),
+  removeClient: jest.fn(),
+}));
+
 jest.unstable_mockModule("../../config/env.ts", () => ({
   env: {
     NODE_ENV: "test",
     JWT_SECRET: "test-jwt-secret",
     JWT_REFRESH_SECRET: "test-jwt-refresh-secret",
     SERVER_URL: "http://localhost:3000",
+    UPLOAD_TYPE: "LOCAL",
+    AWS_REGION: "",
+    AWS_ACCESS_KEY_ID: "",
+    AWS_SECRET_ACCESS_KEY: "",
+    AWS_BUCKET_NAME: "",
+    KAKAO_MAP_REST_API_KEY: "",
   },
 }));
 
@@ -384,6 +407,99 @@ describe("E2E Tests", () => {
         "class-1",
         expect.any(Number),
         expect.any(Number)
+      );
+    });
+  });
+
+  describe("Center API", () => {
+    it("GET /api/centers/geocode - address 없으면 400을 반환한다", async () => {
+      const res = await request(app)
+        .get("/api/centers/geocode")
+        .set("Content-Type", "application/json");
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error?.code).toBe("MISSING_ADDRESS");
+    });
+
+    it("GET /api/centers/geocode - API 키 미설정 시 503을 반환한다", async () => {
+      const res = await request(app)
+        .get("/api/centers/geocode")
+        .query({ address: "서울시 강남구" })
+        .set("Content-Type", "application/json");
+
+      expect(res.status).toBe(503);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error?.code).toBe("GEOCODE_UNAVAILABLE");
+    });
+  });
+
+  describe("Notification API", () => {
+    it("GET /api/notifications - 내 알림 목록 조회 테스트", async () => {
+      const mockResult = {
+        items: [
+          { id: "notif-1", userId: "user-1", title: "제목", body: "내용", isRead: false },
+        ],
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+      };
+      mockListNotifications.mockResolvedValue(mockResult);
+
+      const jwt = (await import("jsonwebtoken")).default;
+      const token = jwt.sign(
+        { id: "user-1", email: "user@example.com", role: "CUSTOMER" },
+        "test-jwt-secret",
+        { expiresIn: "1h" }
+      );
+
+      const res = await request(app)
+        .get("/api/notifications?page=1&limit=20")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toMatchObject({
+        items: expect.any(Array),
+        page: 1,
+        limit: 20,
+      });
+      expect(mockListNotifications).toHaveBeenCalled();
+    });
+
+    it("POST /api/notifications - 관리자 알림 생성 테스트", async () => {
+      const body = { userId: "user-1", title: "공지", body: "내용" };
+      const mockNotification = {
+        id: "notif-1",
+        userId: body.userId,
+        title: body.title,
+        body: body.body,
+        isRead: false,
+      };
+      mockCreateNotification.mockResolvedValue(mockNotification);
+
+      const jwt = (await import("jsonwebtoken")).default;
+      const token = jwt.sign(
+        { id: "admin-1", email: "admin@example.com", role: "ADMIN" },
+        "test-jwt-secret",
+        { expiresIn: "1h" }
+      );
+
+      const res = await request(app)
+        .post("/api/notifications")
+        .send(body)
+        .set("Content-Type", "application/json")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toMatchObject({
+        userId: body.userId,
+        title: body.title,
+      });
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: body.userId, title: body.title })
       );
     });
   });

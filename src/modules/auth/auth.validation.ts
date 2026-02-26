@@ -18,6 +18,8 @@ export const signUpSchema = z.object({
       name: z.string().min(1, '센터명은 필수입니다').max(100),
       address1: z.string().min(1, '도로명 주소는 필수입니다'),
       address2: z.string().optional(),
+      lat: z.number().min(-90).max(90).optional(),
+      lng: z.number().min(-180).max(180).optional(),
     }).optional(),
   }).refine(
     (data) => data.role !== 'SELLER' || !!data.center,

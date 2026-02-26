@@ -85,6 +85,17 @@ export const deleteCoupon = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+// [고객] 내 쿠폰함 조회 (로그인한 유저 본인)
+export const getMyUserCoupons = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id: userId } = (req as AuthRequest).user;
+    const coupons = await couponService.getUserCoupons(userId);
+    res.status(200).json({ success: true, data: coupons });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // 특정 유저의 쿠폰함 조회
 export const getUserCoupons = async (req: Request, res: Response, next: NextFunction) => {
   try {

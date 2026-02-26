@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate, requireRole } from "../../middlewares/auth.ts";
 import { validate } from "../../middlewares/validate.ts";
 import {
+  geocodeHandler,
   getMyCenterHandler,
   getCentersHandler,
   getCenterByIdHandler,
@@ -16,6 +17,9 @@ router.get("/me", authenticate, requireRole("SELLER"), getMyCenterHandler);
 
 // GET /centers - 센터 목록 조회
 router.get("/", validate(queryCenterSchema), getCentersHandler);
+
+// GET /centers/geocode?address=... - 주소 → 위경도 (비인증 가능)
+router.get("/geocode", geocodeHandler);
 
 // GET /centers/:id - 센터 상세 조회
 router.get("/:id", getCenterByIdHandler);
