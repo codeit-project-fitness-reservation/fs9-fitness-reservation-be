@@ -73,6 +73,6 @@ jobs:
             BE_ENV_END
             pnpm install --frozen-lockfile --prod --ignore-scripts
             pnpm prisma:generate
-            export $(grep -v '^#' .env | xargs)
+            export DATABASE_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
             pnpm prisma migrate deploy
             pm2 reload fitmatch-be --update-env || pm2 start pnpm --name fitmatch-be -- start
