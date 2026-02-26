@@ -27,6 +27,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Create env file
+        run: |
+          cat > .env << 'BE_ENV_END'
+          ${{ secrets.BE_ENV }}
+          BE_ENV_END
+
       - name: Prisma generate
         run: pnpm prisma:generate
 
