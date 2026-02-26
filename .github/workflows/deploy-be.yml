@@ -42,7 +42,7 @@ jobs:
       - name: Prepare deploy bundle
         run: |
           mkdir -p deploy-app
-          cp package.json pnpm-lock.yaml .env deploy-app/
+          cp package.json pnpm-lock.yaml .env prisma.config.ts deploy-app/
           cp -r src prisma deploy-app/
           cd deploy-app && tar czf ../deploy.tar.gz .
 
